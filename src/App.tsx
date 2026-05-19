@@ -199,7 +199,7 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-white-main">
+      <div className="flex flex-col items-center justify-center h-svh bg-white-main">
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
@@ -213,7 +213,7 @@ export default function App() {
   // Login view if not authenticated
   if (!user) {
     return (
-      <div id="app-container" className="max-w-[400px] mx-auto bg-white-main h-screen relative overflow-hidden flex flex-col shadow-2xl items-center justify-center p-12 text-center">
+      <div id="app-container" className="max-w-[400px] mx-auto bg-white-main h-svh relative overflow-hidden flex flex-col shadow-2xl items-center justify-center p-12 text-center">
         <div className="w-32 h-32 bg-green-light rounded-full flex items-center justify-center text-6xl mb-8 pulse-glow">🌱</div>
         <h1 className="text-3xl font-black text-text-main mb-4 tracking-tighter">開始你的<br/>慈心大挑戰</h1>
         <p className="text-sm text-text-sub mb-10 leading-relaxed font-medium">
@@ -405,7 +405,7 @@ export default function App() {
     const currentTaskData = TRACK_DATA[track].tasks[Math.min(state.level - 1, 3)];
 
     return (
-      <div className="flex flex-col h-full bg-white-main">
+      <div className="flex flex-col min-h-full bg-white-main">
         <div className="bg-gradient-to-b from-green-light to-white-main px-6 pt-10 pb-8 rounded-b-[40px] shadow-sm">
           <div className="flex justify-between items-center mb-8">
             <div>
@@ -769,7 +769,7 @@ export default function App() {
     };
 
     return (
-      <div className="px-6 py-8 h-full flex flex-col pt-12">
+      <div className="px-6 py-8 min-h-full flex flex-col pt-12">
         <h2 className="text-2xl font-black text-text-main mb-8 flex items-center gap-2 tracking-tight">
           打卡任務 <span className="text-3xl">📸</span>
         </h2>
@@ -855,7 +855,7 @@ export default function App() {
   };
 
   const FeedView = () => (
-    <div className="flex flex-col h-full bg-gray-line/20">
+    <div className="flex flex-col min-h-full bg-gray-line/20">
       <div className="sticky top-0 z-20 px-6 py-6 bg-white/90 backdrop-blur-xl border-b border-gray-line/50 flex justify-between items-center">
         <h2 className="text-xl font-black text-text-main tracking-tight">探索動態</h2>
         <div className="flex gap-2">
@@ -1020,7 +1020,7 @@ export default function App() {
     const [isConfirmingReset, setIsConfirmingReset] = useState(false);
 
     return (
-      <div className="flex flex-col h-full bg-white-main">
+      <div className="flex flex-col min-h-full bg-white-main">
         <div className="bg-white rounded-b-[48px] shadow-soft px-8 py-12 mb-8 border-b border-gray-line/50">
           <div className="flex items-center gap-6 mb-10">
             <div className="w-24 h-24 rounded-full bg-green-light border-[6px] border-white shadow-float overflow-hidden shrink-0">
@@ -1209,7 +1209,7 @@ export default function App() {
   };
 
   return (
-    <div id="app-container" className="max-w-[400px] mx-auto bg-white-main h-screen relative overflow-hidden flex flex-col shadow-2xl">
+    <div id="app-container" className="max-w-[400px] mx-auto bg-white-main h-svh relative overflow-hidden flex flex-col shadow-2xl">
       <AnimatePresence mode="wait">
         <motion.div 
           key={currentView}
@@ -1217,7 +1217,7 @@ export default function App() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -15 }}
           transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-          className="flex-1 overflow-y-auto hide-scrollbar pb-24"
+          className="flex-1 overflow-y-auto hide-scrollbar pb-[calc(7.5rem+env(safe-area-inset-bottom,0px))]"
         >
           {currentView === 'preview' && <PreviewView />}
           {currentView === 'select' && <SelectView />}
@@ -1230,9 +1230,8 @@ export default function App() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Bottom Navigation */}
       <nav id="bottom-nav" className={cn(
-        "absolute bottom-0 left-0 w-full h-24 bg-white/95 backdrop-blur-xl border-t border-gray-line/50 flex justify-around items-center px-4 z-40 transition-all duration-500",
+        "absolute bottom-0 left-0 w-full h-[calc(6rem+env(safe-area-inset-bottom,0px))] pb-[env(safe-area-inset-bottom,0px)] bg-white/95 backdrop-blur-xl border-t border-gray-line/50 flex justify-around items-center px-4 z-40 transition-all duration-500",
         ['preview', 'select'].includes(currentView) ? "translate-y-full opacity-0" : "translate-y-0 opacity-100"
       )}>
         <NavItem active={currentView === 'dashboard'} onClick={() => handleNav('dashboard')} icon={<Home />} label="首頁" />
