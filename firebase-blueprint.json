@@ -1,0 +1,53 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user progress and profile information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "track": { "type": "string", "enum": ["veg", "plastic", "dual"] },
+        "level": { "type": "number" },
+        "exp": { "type": "number" },
+        "streak": { "type": "number" },
+        "checkInCount": { "type": "number" },
+        "co2Saved": { "type": "number" },
+        "unlockedBadges": { "type": "array", "items": { "type": "string" } },
+        "lastCheckInDate": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "track", "level", "exp", "createdAt", "updatedAt"]
+    },
+    "CheckIn": {
+      "title": "Check-in Task",
+      "description": "Recording of a user's sustainability action.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userAvatar": { "type": "string" },
+        "track": { "type": "string", "enum": ["veg", "plastic", "dual"] },
+        "level": { "type": "number" },
+        "text": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "expGained": { "type": "number" },
+        "likes": { "type": "number" }
+      },
+      "required": ["userId", "track", "level", "text", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile documents."
+    },
+    "/checkins/{checkinId}": {
+      "schema": "CheckIn",
+      "description": "Public check-in feed and audit trail."
+    }
+  }
+}

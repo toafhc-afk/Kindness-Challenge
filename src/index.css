@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Nunito", "Noto Sans TC", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-green-main: #9FD356;
+  --color-green-light: #E8F5D8;
+  --color-blue-main: #3C91E6;
+  --color-blue-light: #E1EEFA;
+  --color-white-main: #FAFFFD;
+  --color-text-main: #1E2A1F;
+  --color-text-sub: #6F7A70;
+  --color-gray-line: #E8EEE8;
+  --color-gray-lock: #A8ADA6;
+
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --shadow-float: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+@layer base {
+  body {
+    @apply bg-gray-line text-text-main antialiased selection:bg-green-main/30;
+    overscroll-behavior-y: none;
+  }
+}
+
+@layer components {
+  .btn-active {
+    @apply active:scale-95 transition-transform duration-200;
+  }
+  
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(159, 211, 86, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(159, 211, 86, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(159, 211, 86, 0); }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s infinite;
+}

@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Users ---
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && isValidUser(incoming());
+      allow update: if isSignedIn() && isOwner(userId) && isValidUser(incoming())
+                       && incoming().uid == existing().uid;
+      
+      function isValidUser(data) {
+        return data.keys().hasAll(['uid', 'track', 'level', 'exp', 'createdAt', 'updatedAt'])
+               && data.uid == request.auth.uid
+               && data.level is number && data.level >= 1 && data.level <= 5
+               && data.exp is number && data.exp >= 0
+               && (data.track == 'veg' || data.track == 'plastic' || data.track == 'dual')
+               && data.createdAt is timestamp
+               && data.updatedAt == request.time;
+      }
+    }
+
+    // --- Check-ins ---
+    match /checkins/{checkinId} {
+      allow list: if isSignedIn(); // Social feed
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() 
+                       && incoming().userId == request.auth.uid 
+                       && isValidCheckIn(incoming());
+      // Updates only for likes (in a real app, likes might be subcollection)
+      allow update: if isSignedIn() && (
+        // Only allow author to update content? Or just likes?
+        (incoming().userId == request.auth.uid && isValidCheckIn(incoming())) ||
+        (incoming().diff(existing()).affectedKeys().hasOnly(['likes']))
+      );
+      
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+
+      function isValidCheckIn(data) {
+        return data.userId == request.auth.uid
+               && data.text is string && data.text.size() <= 1000
+               && (data.track == 'veg' || data.track == 'plastic' || data.track == 'dual')
+               && data.timestamp == request.time;
+      }
+    }
+  }
+}
