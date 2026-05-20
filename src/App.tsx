@@ -613,7 +613,7 @@ export default function App() {
           </div>
         </div>
         
-        <div onScroll={handleScroll} className="flex-1 overflow-y-auto hide-scrollbar px-6 py-12 relative flex flex-col gap-20 pb-52">
+        <div onScroll={handleScroll} className="flex-1 overflow-y-auto hide-scrollbar px-6 py-12 relative flex flex-col gap-20" style={{ paddingBottom: 'calc(8rem + env(safe-area-inset-bottom, 0px))' }}>
           <div className="absolute top-20 bottom-32 left-1/2 -translate-x-1/2 w-3 bg-gray-line rounded-full z-0 overflow-hidden">
             <motion.div 
               initial={{ height: 0 }}
@@ -1590,7 +1590,10 @@ export default function App() {
           exit={{ opacity: 0, y: -15 }}
           transition={{ type: 'spring', damping: 25, stiffness: 400 }}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto hide-scrollbar pb-[calc(7.5rem+env(safe-area-inset-bottom,0px))]"
+          className={cn(
+            "flex-1 hide-scrollbar",
+            currentView === 'map' ? "overflow-hidden" : "overflow-y-auto pb-[calc(7.5rem+env(safe-area-inset-bottom,0px))]"
+          )}
         >
           {currentView === 'preview' && renderPreviewView()}
           {currentView === 'select' && renderSelectView()}
