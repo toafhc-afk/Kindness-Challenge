@@ -37,7 +37,7 @@ import { useAuth } from './lib/AuthContext';
 import { loginWithGoogle, auth, db, storage } from './lib/firebase';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit, onSnapshot, deleteDoc, arrayUnion } from 'firebase/firestore';
-import { TRACK_DATA, LEVELS_EXP_REQ, TITLES, BADGES } from './constants';
+import { TRACK_DATA, LEVELS_EXP_REQ, TITLES, TITLES_BY_TRACK, BADGES } from './constants';
 import { View, Track, Task, AppState } from './types';
 import { cn, calculateLevel } from './lib/utils';
 
@@ -96,6 +96,7 @@ export default function App() {
   const [showRewardModal, setShowRewardModal] = useState<Track | null>(null);
 
   const lastScrollY = React.useRef(0);
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const [isNavVisible, setIsNavVisible] = useState(true);
 
   // Form states lifted to prevent unmounting resetting during scrolling
@@ -127,6 +128,18 @@ export default function App() {
     setEditingCommentIndex(null);
     // Reset selected map task on view switch
     setSelectedMapTaskIndex(null);
+  }, [currentView]);
+
+  // When entering map, scroll to bottom so level 1 is visible first
+  useEffect(() => {
+    if (currentView === 'map' && scrollContainerRef.current) {
+      const el = scrollContainerRef.current;
+      // Use requestAnimationFrame to ensure content is rendered
+      const raf = requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight;
+      });
+      return () => cancelAnimationFrame(raf);
+    }
   }, [currentView]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -523,7 +536,7 @@ export default function App() {
                 <div className="bg-green-main text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider">
                   Lv.{lv}
                 </div>
-                <span className="font-bold text-text-main text-sm">{TITLES[lv - 1]}</span>
+                <span className="font-bold text-text-main text-sm">{(TITLES_BY_TRACK[state.track || 'veg'] ?? TITLES)[lv - 1]}</span>
               </div>
               <div className="text-[11px] font-bold text-text-sub/70">
                 <span className="text-green-main font-black underline decoration-2 underline-offset-4">{state.exp}</span> / {expReq} EXP
@@ -649,7 +662,7 @@ export default function App() {
                   <div
                     className={cn(
                       "w-20 h-20 rounded-full bg-white flex items-center justify-center text-3xl shadow-float border-4 relative transition-all duration-500",
-                      status === 'active' ? "pulse-glow scale-110" :
+                      status === 'active' ? `${track === 'plastic' ? 'pulse-glow-blue' : track === 'dual' ? 'pulse-glow-yellow' : 'pulse-glow'} scale-110` :
                       status === 'locked' ? "border-gray-line grayscale opacity-60" : ""
                     )}
                     style={status !== 'locked' ? { borderColor: data.themeColor } : undefined}
@@ -1591,6 +1604,7 @@ export default function App() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -15 }}
           transition={{ type: 'spring', damping: 25, stiffness: 400 }}
+          ref={scrollContainerRef}
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto hide-scrollbar pb-[calc(7.5rem+env(safe-area-inset-bottom,0px))]"
         >
@@ -1618,13 +1632,14 @@ export default function App() {
             whileTap={{ scale: 0.9 }}
             onClick={() => handleNav('checkin')}
             className={cn(
-              "w-20 h-20 rounded-full bg-gradient-to-br from-green-main to-[#8CC048] flex items-center justify-center text-white shadow-float border-[6px] border-white transition-all cursor-pointer",
-              currentView === 'checkin' ? "scale-110 shadow-green-main/40" : ""
+              "w-20 h-20 rounded-full flex items-center justify-center text-white shadow-float border-[6px] border-white transition-all cursor-pointer",
+              currentView === 'checkin' ? "scale-110" : ""
             )}
+            style={{ background: 'linear-gradient(135deg, #4A9166, #5aab7a)' }}
           >
             <Camera className="w-8 h-8" strokeWidth={2.5} />
           </motion.div>
-          <span className="absolute bottom-[-28px] left-1/2 -translate-x-1/2 text-[10px] font-black text-green-main uppercase tracking-widest">打卡</span>
+          <span className="absolute bottom-[-28px] left-1/2 -translate-x-1/2 text-[10px] font-black uppercase tracking-widest" style={{ color: '#4A9166' }}>打卡</span>
         </div>
 
         <NavItem active={currentView === 'feed'} onClick={() => handleNav('feed')} icon={<Compass />} label="探索" />
@@ -1838,7 +1853,7 @@ function NavItem({ active, onClick, icon, label }: { active: boolean; onClick: (
       onClick={onClick}
       className={cn(
         "flex flex-col items-center gap-1.5 cursor-pointer transition-all duration-300",
-        active ? "text-green-main" : "text-gray-lock hover:text-text-sub"
+        active ? "text-nav-accent" : "text-gray-lock hover:text-text-sub"
       )}
     >
       <motion.div 
@@ -1848,7 +1863,7 @@ function NavItem({ active, onClick, icon, label }: { active: boolean; onClick: (
         {React.cloneElement(icon as React.ReactElement, { strokeWidth: active ? 2.5 : 2, size: 24 })}
       </motion.div>
       <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
-      {active && <motion.div layoutId="nav-dot" className="w-1 h-1 bg-green-main rounded-full" />}
+      {active && <motion.div layoutId="nav-dot" className="w-1 h-1 rounded-full" style={{ backgroundColor: '#4A9166' }} />}
     </div>
   );
 }

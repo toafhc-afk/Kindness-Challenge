@@ -3,6 +3,12 @@ import { TrackData, Badge, Track } from './types';
 export const LEVELS_EXP_REQ = [0, 100, 250, 450, 700];
 export const TITLES = ['綠芽學徒', '行動探索者', '慈心實踐家', '永續影響者', '地球守護神'];
 
+export const TITLES_BY_TRACK: Record<string, string[]> = {
+  veg:     ['綠芽學徒',   '行動探索者',   '慈心實踐家',   '永續影響者',   '地球守護神'],
+  plastic: ['淨塑初探者', '減塑行動員',   '環保生活家',   '海洋守護者',   '零塑先鋒'],
+  dual:    ['雙軌啟程者', '友善行動家',   '永續實踐者',   '慈心影響力家', '地球友善勇士'],
+};
+
 export const TRACK_DATA: Record<Track, TrackData> = {
   veg: {
     themeColor: '#9FD356',
@@ -28,8 +34,8 @@ export const TRACK_DATA: Record<Track, TrackData> = {
   },
   dual: {
     themeColor: '#FF9F1C',
-    lightColor: '#FFF0E5',
-    bg: '#FFFAFA',
+    lightColor: '#FFF0D0',
+    bg: '#FFFBF0',
     tasks: [
       { id: 1, title: '看見', desc: '觀察生活中的塑膠與飲食', fullDesc: '記錄一天的飲食與塑膠使用狀況。', icon: '🔍', placeholder: '例如：今天記錄了自己一天的三餐與垃圾，發現減塑與蔬食其實可以輕鬆融合，下定決心明天開始挑戰！' },
       { id: 2, title: '選擇', desc: '蔬食＋淨塑雙重行動', fullDesc: '同天完成：吃一餐蔬食 且 拒絕一次塑膠。', icon: '🌍', placeholder: '例如：今天中午自己帶玻璃餐盒裝素食炒麵，順利完成「吃蔬食＋完全無塑袋」的雙重挑戰，給自己一個大大的讚！' },
