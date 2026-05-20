@@ -108,14 +108,25 @@ export default function App() {
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [commentInputText, setCommentInputText] = useState('');
 
+  // Editing comments state
+  const [editingCommentIndex, setEditingCommentIndex] = useState<{postId: string, commentIdx: number} | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
+
   // Profile reset state
   const [isConfirmingReset, setIsConfirmingReset] = useState(false);
+
+  // Map interactive state
+  const [selectedMapTaskIndex, setSelectedMapTaskIndex] = useState<number | null>(null);
 
   useEffect(() => {
     setIsNavVisible(true);
     lastScrollY.current = 0;
     // Reset active comment box on view switch
     setActiveCommentPostId(null);
+    // Reset comment edit state
+    setEditingCommentIndex(null);
+    // Reset selected map task on view switch
+    setSelectedMapTaskIndex(null);
   }, [currentView]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -127,6 +138,38 @@ export default function App() {
         setIsNavVisible(true);
       }
       lastScrollY.current = currentScrollY;
+    }
+  };
+
+  const handleDeleteComment = async (postId: string, commentIndex: number) => {
+    if (!confirm('確定要刪除這則留言嗎？')) return;
+    try {
+      const post = globalFeed.find(p => p.id === postId);
+      if (!post || !post.comments) return;
+      const updatedComments = post.comments.filter((_: any, idx: number) => idx !== commentIndex);
+      const postRef = doc(db, 'checkins', postId);
+      await updateDoc(postRef, { comments: updatedComments });
+    } catch (err) {
+      console.error('Failed to delete comment:', err);
+    }
+  };
+
+  const handleSaveComment = async (postId: string, commentIndex: number) => {
+    if (!editingCommentText.trim()) return;
+    try {
+      const post = globalFeed.find(p => p.id === postId);
+      if (!post || !post.comments) return;
+      const updatedComments = post.comments.map((c: any, idx: number) => {
+        if (idx === commentIndex) {
+          return { ...c, text: editingCommentText.trim() };
+        }
+        return c;
+      });
+      const postRef = doc(db, 'checkins', postId);
+      await updateDoc(postRef, { comments: updatedComments });
+      setEditingCommentIndex(null);
+    } catch (err) {
+      console.error('Failed to update comment:', err);
     }
   };
 
@@ -521,10 +564,9 @@ export default function App() {
     const data = TRACK_DATA[track];
     const tasks = data.tasks;
     const progressPercent = ((state.level - 1) / 3) * 100;
-    const currentTask = tasks[Math.min(state.level - 1, 3)];
 
     return (
-      <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: data.bg }}>
+      <div className="flex flex-col h-full overflow-hidden relative" style={{ backgroundColor: data.bg }}>
         <div className="sticky top-0 z-20 px-6 py-6 bg-white/80 backdrop-blur-xl border-b border-gray-line/50 flex items-center justify-between">
           <h2 className="text-xl font-black text-text-main tracking-tight">
             {track === 'veg' ? '田園闖關地圖' : track === 'plastic' ? '海岸淨塑地圖' : '雙軌冒險地圖'}
@@ -534,7 +576,7 @@ export default function App() {
           </div>
         </div>
         
-        <div onScroll={handleScroll} className="flex-1 overflow-y-auto hide-scrollbar px-6 py-12 relative flex flex-col-reverse gap-20">
+        <div onScroll={handleScroll} className="flex-1 overflow-y-auto hide-scrollbar px-6 py-12 relative flex flex-col-reverse gap-20 pb-36">
           <div className="absolute top-20 bottom-32 left-1/2 -translate-x-1/2 w-3 bg-gray-line rounded-full z-0 overflow-hidden">
             <motion.div 
               initial={{ height: 0 }}
@@ -553,11 +595,11 @@ export default function App() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 className={cn(
-                  "relative z-10 flex items-center",
+                  "relative z-10 flex items-center cursor-pointer",
                   idx % 2 === 0 ? "justify-start pl-[5%]" : "justify-end pr-[5%]"
                 )}
                 onClick={() => {
-                  if (status === 'active') handleNav('checkin');
+                  setSelectedMapTaskIndex(idx);
                 }}
               >
                 <div className={cn(
@@ -599,27 +641,85 @@ export default function App() {
           })}
         </div>
 
-        {/* Sticky Bottom Task Card */}
-        <div className="px-6 pb-28 pt-4">
-          <motion.div 
-            layoutId="bottom-card"
-            className="bg-white rounded-3xl shadow-float p-6 z-20 border border-gray-line/50"
-          >
-            <div className="flex justify-between items-center mb-3">
-              <div className="text-[11px] font-black text-text-main uppercase tracking-widest opacity-60">目前任務</div>
-              <div className="text-[10px] font-black text-white bg-green-main px-3 py-1 rounded-full">+20 EXP</div>
-            </div>
-            <h4 className="font-black text-base mb-5 leading-tight text-text-main">
-              {currentTask.fullDesc}
-            </h4>
-            <button 
-              onClick={() => handleNav('checkin')} 
-              className="w-full bg-green-main text-white font-black py-4 rounded-2xl text-sm btn-active shadow-lg shadow-green-main/20 flex items-center justify-center gap-2"
-            >
-              立即打卡行動 <Camera className="w-4 h-4" />
-            </button>
-          </motion.div>
-        </div>
+        {/* Level Detail Bottom Sheet */}
+        <AnimatePresence>
+          {selectedMapTaskIndex !== null && (
+            <>
+              {/* Dark backdrop overlay */}
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setSelectedMapTaskIndex(null)}
+                className="absolute inset-0 bg-black/40 z-30"
+              />
+              
+              {/* Slide up Bottom Sheet */}
+              <motion.div 
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="absolute bottom-0 left-0 w-full bg-white rounded-t-[40px] shadow-float p-8 z-40 border-t border-gray-line/50 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))]"
+              >
+                {/* Visual drag indicator */}
+                <div className="w-12 h-1.5 bg-gray-line/60 rounded-full mx-auto mb-6" />
+
+                {/* Close Button */}
+                <button 
+                  onClick={() => setSelectedMapTaskIndex(null)}
+                  className="absolute top-6 right-6 p-2 text-text-sub hover:text-text-main transition-colors bg-gray-line/30 rounded-full"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+
+                <div className="flex justify-between items-center mb-4">
+                  <span className={cn(
+                    "text-[10px] font-black uppercase tracking-[0.2em]",
+                    track === 'veg' ? 'text-green-main' : track === 'plastic' ? 'text-blue-main' : 'text-[#FF9F1C]'
+                  )}>
+                    關卡 {['一','二','三','四'][selectedMapTaskIndex]}・{tasks[selectedMapTaskIndex].title}
+                  </span>
+                  
+                  {/* Status Badge */}
+                  {selectedMapTaskIndex + 1 < state.level ? (
+                    <span className="text-[10px] font-black bg-green-light text-green-main border border-green-main/20 px-3 py-1.5 rounded-full flex items-center gap-1">已完成 ✅</span>
+                  ) : selectedMapTaskIndex + 1 === state.level ? (
+                    <span className="text-[10px] font-black bg-orange-100 text-[#FF9F1C] border border-orange-200 px-3 py-1.5 rounded-full flex items-center gap-1">挑戰中 ⚡</span>
+                  ) : (
+                    <span className="text-[10px] font-black bg-gray-line/50 text-gray-lock px-3 py-1.5 rounded-full flex items-center gap-1">尚未解鎖 🔒</span>
+                  )}
+                </div>
+
+                <h3 className="font-black text-base text-text-main mb-6 leading-relaxed">
+                  {tasks[selectedMapTaskIndex].fullDesc}
+                </h3>
+
+                {selectedMapTaskIndex + 1 === state.level ? (
+                  <button 
+                    onClick={() => {
+                      setSelectedMapTaskIndex(null);
+                      handleNav('checkin');
+                    }} 
+                    className="w-full bg-green-main text-white font-black py-4 rounded-2xl text-sm btn-active shadow-lg shadow-green-main/20 flex items-center justify-center gap-2 hover:scale-[0.98] transition-transform"
+                  >
+                    立即打卡行動 <Camera className="w-4 h-4" />
+                  </button>
+                ) : selectedMapTaskIndex + 1 < state.level ? (
+                  <div className="w-full bg-green-light text-green-main font-black py-4 rounded-2xl text-sm text-center border border-green-main/10 shadow-sm flex items-center justify-center gap-2">
+                    你已經順利完成了此關卡！✨
+                  </div>
+                ) : (
+                  <div className="w-full bg-gray-line/40 text-gray-lock font-black py-4 rounded-2xl text-sm text-center border border-gray-line/50 flex items-center justify-center gap-1">
+                    完成前一關即可解鎖此任務 🔒
+                  </div>
+                )}
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     );
   };
@@ -1000,24 +1100,84 @@ export default function App() {
                   {(!post.comments || post.comments.length === 0) ? (
                     <p className="text-[11px] text-gray-lock text-center py-2">還沒有留言，快來留下第一句溫暖的話吧！</p>
                   ) : (
-                    post.comments.map((comment: any, cIdx: number) => (
-                      <div key={cIdx} className="flex gap-2 items-start text-xs bg-gray-line/10 p-3 rounded-2xl border border-gray-line/30">
-                        <img 
-                          src={`https://api.dicebear.com/7.x/notionists/svg?seed=${comment.userAvatar || 'anon'}&backgroundColor=transparent`} 
-                          className="w-7 h-7 rounded-full bg-gray-line shadow-inner shrink-0"
-                          alt="Avatar"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-center mb-0.5">
-                            <span className="font-black text-[11px] text-text-main truncate mr-2">{comment.userName}</span>
-                            <span className="text-[9px] text-text-sub/50 font-bold shrink-0">
-                              {comment.timestamp ? new Date(comment.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '剛剛'}
-                            </span>
+                    post.comments.map((comment: any, cIdx: number) => {
+                      const isOwner = comment.userId === user?.uid;
+                      const isEditing = editingCommentIndex?.postId === post.id && editingCommentIndex?.commentIdx === cIdx;
+                      return (
+                        <div key={cIdx} className="flex gap-2 items-start text-xs bg-gray-line/10 p-3 rounded-2xl border border-gray-line/30">
+                          <img 
+                            src={`https://api.dicebear.com/7.x/notionists/svg?seed=${comment.userAvatar || 'anon'}&backgroundColor=transparent`} 
+                            className="w-7 h-7 rounded-full bg-gray-line shadow-inner shrink-0"
+                            alt="Avatar"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-center mb-0.5">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="font-black text-[11px] text-text-main truncate">{comment.userName}</span>
+                                {isOwner && <span className="text-[8px] bg-green-light text-green-main border border-green-main/10 px-1.5 py-0.5 rounded font-black shrink-0">我</span>}
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="text-[9px] text-text-sub/50 font-bold">
+                                  {comment.timestamp ? new Date(comment.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '剛剛'}
+                                </span>
+                                {isOwner && !isEditing && (
+                                  <div className="flex items-center gap-1">
+                                    <button 
+                                      onClick={() => {
+                                        setEditingCommentIndex({ postId: post.id, commentIdx: cIdx });
+                                        setEditingCommentText(comment.text);
+                                      }}
+                                      className="p-1 text-gray-lock hover:text-green-main transition-colors"
+                                      title="編輯留言"
+                                    >
+                                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                      </svg>
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeleteComment(post.id, cIdx)}
+                                      className="p-1 text-gray-lock hover:text-red-500 transition-colors"
+                                      title="刪除留言"
+                                    >
+                                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {isEditing ? (
+                              <div className="flex flex-col gap-2 mt-1 w-full">
+                                <textarea
+                                  value={editingCommentText}
+                                  onChange={(e) => setEditingCommentText(e.target.value)}
+                                  className="w-full bg-white border border-gray-line rounded-xl p-2 text-xs focus:outline-none focus:border-green-main resize-none"
+                                  rows={2}
+                                />
+                                <div className="flex gap-2 justify-end">
+                                  <button 
+                                    onClick={() => setEditingCommentIndex(null)}
+                                    className="px-2.5 py-1 bg-gray-line/40 hover:bg-gray-line/60 rounded-lg text-[10px] font-bold transition-colors"
+                                  >
+                                    取消
+                                  </button>
+                                  <button 
+                                    onClick={() => handleSaveComment(post.id, cIdx)}
+                                    className="px-2.5 py-1 bg-text-main hover:bg-green-main text-white rounded-lg text-[10px] font-bold transition-colors"
+                                  >
+                                    儲存
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-text-sub font-medium text-[12px] leading-relaxed break-words whitespace-pre-wrap">{comment.text}</p>
+                            )}
                           </div>
-                          <p className="text-text-sub font-medium text-[12px] leading-relaxed break-words">{comment.text}</p>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
 
@@ -1032,7 +1192,8 @@ export default function App() {
                           userName: user?.displayName || '匿名探險家',
                           userAvatar: state.track || 'anon',
                           text: commentInputText.trim(),
-                          timestamp: Date.now()
+                          timestamp: Date.now(),
+                          userId: user?.uid
                         })
                       });
                       setCommentInputText('');
@@ -1042,15 +1203,15 @@ export default function App() {
                   }} 
                   className="flex gap-2 mt-3"
                 >
-                  <input 
-                    type="text" 
+                  <textarea 
                     value={commentInputText}
                     onChange={(e) => setCommentInputText(e.target.value)}
                     placeholder="寫下你的溫暖回饋..." 
-                    className="flex-1 bg-gray-line/40 border border-transparent rounded-2xl px-4 py-2.5 text-xs focus:outline-none focus:border-green-main focus:bg-white transition-all shadow-inner-soft"
+                    rows={1}
+                    className="flex-1 bg-gray-line/40 border border-transparent rounded-2xl px-4 py-2.5 text-xs focus:outline-none focus:border-green-main focus:bg-white transition-all shadow-inner-soft resize-none min-h-[38px] max-h-20"
                     required
                   />
-                  <button type="submit" className="bg-text-main text-white px-4 py-2.5 rounded-2xl text-xs font-black hover:bg-green-main hover:scale-95 transition-all shrink-0 btn-active shadow-sm">
+                  <button type="submit" className="bg-text-main text-white px-4 py-2.5 rounded-2xl text-xs font-black hover:bg-green-main hover:scale-95 transition-all shrink-0 btn-active shadow-sm flex items-center justify-center min-h-[38px]">
                     送出
                   </button>
                 </form>
