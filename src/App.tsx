@@ -644,14 +644,20 @@ export default function App() {
                   "flex items-center gap-6",
                   idx % 2 === 0 ? "flex-row" : "flex-row-reverse text-right"
                 )}>
-                  <div className={cn(
-                    "w-20 h-20 rounded-full bg-white flex items-center justify-center text-3xl shadow-float border-4 relative transition-all duration-500",
-                    status === 'active' ? "border-green-main pulse-glow scale-110" : 
-                    status === 'done' ? "border-green-main" : "border-gray-line grayscale opacity-60"
-                  )}>
+                  <div
+                    className={cn(
+                      "w-20 h-20 rounded-full bg-white flex items-center justify-center text-3xl shadow-float border-4 relative transition-all duration-500",
+                      status === 'active' ? "pulse-glow scale-110" :
+                      status === 'locked' ? "border-gray-line grayscale opacity-60" : ""
+                    )}
+                    style={status !== 'locked' ? { borderColor: data.themeColor } : undefined}
+                  >
                     {task.icon}
                     {status === 'done' && (
-                      <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-green-main text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                      <div
+                        className="absolute -bottom-1 -right-1 w-7 h-7 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white"
+                        style={{ backgroundColor: data.themeColor }}
+                      >
                         <Check className="w-4 h-4 stroke-[4]" />
                       </div>
                     )}
@@ -677,6 +683,8 @@ export default function App() {
               </motion.div>
             );
           })}
+          {/* Spacer so level 1 is always scrollable above nav bar */}
+          <div className="h-20 shrink-0" />
         </div>
 
         {/* Level Detail Bottom Sheet */}
@@ -942,36 +950,29 @@ export default function App() {
       }
     };
 
-    const levelThemes = [
-      {
-        bg: 'from-[#FAFFFD] to-white bg-green-light border-green-main/30',
-        badge: 'bg-green-main/10 text-green-main',
-        iconBg: 'bg-green-light border-green-main/10',
-        title: '階段一：察覺觀察',
-        shadow: 'shadow-[0_8px_30px_rgba(159,211,86,0.12)]'
-      },
-      {
-        bg: 'from-[#E1EEFA] to-white border-blue-main/30',
-        badge: 'bg-blue-main/10 text-blue-main',
-        iconBg: 'bg-blue-light border-blue-main/10',
-        title: '階段二：踏出選擇',
-        shadow: 'shadow-[0_8px_30px_rgba(60,145,230,0.12)]'
-      },
-      {
-        bg: 'from-[#E8F5D8] to-white border-[#84C318]/30',
-        badge: 'bg-[#84C318]/10 text-[#84C318]',
-        iconBg: 'bg-[#E8F5D8] border-[#84C318]/10',
-        title: '階段三：深化實踐',
-        shadow: 'shadow-[0_8px_30px_rgba(132,195,24,0.12)]'
-      },
-      {
-        bg: 'from-[#FFF0E5] to-white border-orange-main/30',
-        badge: 'bg-orange-main/10 text-orange-main',
-        iconBg: 'bg-[#FFF0E5] border-orange-main/10',
-        title: '階段四：擴散影響',
-        shadow: 'shadow-[0_8px_30px_rgba(255,159,28,0.12)]'
-      }
-    ];
+    const allTrackThemes: Record<string, typeof levelThemesVeg> = {
+      veg: [
+        { bg: 'from-[#FAFFFD] to-white bg-green-light border-green-main/30', badge: 'bg-green-main/10 text-green-main', iconBg: 'bg-green-light border-green-main/10', title: '階段一：察覺觀察', shadow: 'shadow-[0_8px_30px_rgba(159,211,86,0.12)]' },
+        { bg: 'from-[#E8F5D8] to-white border-[#84C318]/30', badge: 'bg-[#84C318]/10 text-[#84C318]', iconBg: 'bg-[#E8F5D8] border-[#84C318]/10', title: '階段二：踏出選擇', shadow: 'shadow-[0_8px_30px_rgba(132,195,24,0.12)]' },
+        { bg: 'from-[#D4EEB8] to-white border-green-main/40', badge: 'bg-green-main/15 text-green-main', iconBg: 'bg-[#D4EEB8] border-green-main/20', title: '階段三：深化實踐', shadow: 'shadow-[0_8px_30px_rgba(159,211,86,0.18)]' },
+        { bg: 'from-[#C8E8A8] to-white border-green-main/50', badge: 'bg-green-main/20 text-green-main', iconBg: 'bg-[#C8E8A8] border-green-main/30', title: '階段四：擴散影響', shadow: 'shadow-[0_8px_30px_rgba(159,211,86,0.22)]' }
+      ],
+      plastic: [
+        { bg: 'from-[#F0F8FF] to-white border-blue-main/20', badge: 'bg-blue-main/8 text-blue-main', iconBg: 'bg-[#F0F8FF] border-blue-main/10', title: '階段一：察覺觀察', shadow: 'shadow-[0_8px_30px_rgba(60,145,230,0.10)]' },
+        { bg: 'from-[#E1EEFA] to-white border-blue-main/30', badge: 'bg-blue-main/10 text-blue-main', iconBg: 'bg-blue-light border-blue-main/10', title: '階段二：踏出選擇', shadow: 'shadow-[0_8px_30px_rgba(60,145,230,0.14)]' },
+        { bg: 'from-[#CCDFF5] to-white border-blue-main/40', badge: 'bg-blue-main/15 text-blue-main', iconBg: 'bg-[#CCDFF5] border-blue-main/20', title: '階段三：深化實踐', shadow: 'shadow-[0_8px_30px_rgba(60,145,230,0.18)]' },
+        { bg: 'from-[#B8D2EE] to-white border-blue-main/50', badge: 'bg-blue-main/20 text-blue-main', iconBg: 'bg-[#B8D2EE] border-blue-main/30', title: '階段四：擴散影響', shadow: 'shadow-[0_8px_30px_rgba(60,145,230,0.22)]' }
+      ],
+      dual: [
+        { bg: 'from-[#FFFDF0] to-white border-[#FF9F1C]/20', badge: 'bg-[#FF9F1C]/8 text-[#c07800]', iconBg: 'bg-[#FFFDF0] border-[#FF9F1C]/10', title: '階段一：察覺觀察', shadow: 'shadow-[0_8px_30px_rgba(255,159,28,0.10)]' },
+        { bg: 'from-[#FFF0D0] to-white border-[#FF9F1C]/30', badge: 'bg-[#FF9F1C]/10 text-[#b06800]', iconBg: 'bg-[#FFF0D0] border-[#FF9F1C]/15', title: '階段二：踏出選擇', shadow: 'shadow-[0_8px_30px_rgba(255,159,28,0.14)]' },
+        { bg: 'from-[#FFE5A8] to-white border-[#FF9F1C]/40', badge: 'bg-[#FF9F1C]/15 text-[#985800]', iconBg: 'bg-[#FFE5A8] border-[#FF9F1C]/20', title: '階段三：深化實踐', shadow: 'shadow-[0_8px_30px_rgba(255,159,28,0.18)]' },
+        { bg: 'from-[#FFD880] to-white border-[#FF9F1C]/50', badge: 'bg-[#FF9F1C]/20 text-[#7d4800]', iconBg: 'bg-[#FFD880] border-[#FF9F1C]/30', title: '階段四：擴散影響', shadow: 'shadow-[0_8px_30px_rgba(255,159,28,0.22)]' }
+      ]
+    };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const levelThemesVeg = allTrackThemes.veg;
+    const levelThemes = allTrackThemes[track] ?? allTrackThemes.veg;
     const theme = levelThemes[Math.min(state.level - 1, 3)];
 
     return (
