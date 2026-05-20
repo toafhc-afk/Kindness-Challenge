@@ -314,15 +314,18 @@ export default function App() {
 
   const PreviewView = () => (
     <div className="px-6 py-8">
-      <h1 className="text-2xl font-black text-text-main text-center mb-2">慈心大挑戰</h1>
-      <p className="text-sm text-text-sub text-center mb-6 font-medium">選軌道前，先看看關卡要做什麼吧！</p>
+      <h1 className="text-2xl font-black text-text-main text-center mb-2 tracking-tight">慈心大挑戰</h1>
+      <p className="text-xs text-text-sub text-center mb-6 font-bold leading-relaxed px-4">
+        在這裡，你可以預覽每個軌道完整的 4 個階段挑戰。<br/>
+        選定適合你的路線後，即可點選下方開始挑戰！
+      </p>
 
       {/* Tabs */}
       <div className="flex bg-gray-line rounded-full p-1 mb-6">
         <button 
           onClick={() => setPreviewTab('veg')}
           className={cn(
-            "flex-1 py-3 text-sm font-bold rounded-full transition-all duration-300",
+            "flex-1 py-3 text-sm font-black rounded-full transition-all duration-300",
             previewTab === 'veg' ? "bg-white text-green-main shadow-sm" : "text-text-sub"
           )}
         >
@@ -331,7 +334,7 @@ export default function App() {
         <button 
           onClick={() => setPreviewTab('plastic')}
           className={cn(
-            "flex-1 py-3 text-sm font-bold rounded-full transition-all duration-300",
+            "flex-1 py-3 text-sm font-black rounded-full transition-all duration-300",
             previewTab === 'plastic' ? "bg-white text-blue-main shadow-sm" : "text-text-sub"
           )}
         >
@@ -348,24 +351,25 @@ export default function App() {
             transition={{ delay: idx * 0.1 }}
             key={task.id}
             className={cn(
-              "bg-white p-4 rounded-2xl shadow-soft flex items-center gap-4 border",
-              idx > 1 ? "opacity-60 grayscale-[0.5]" : previewTab === 'veg' ? "border-green-light" : "border-blue-light"
+              "bg-white p-4.5 rounded-3xl shadow-soft flex items-start gap-4 border transition-all duration-300",
+              previewTab === 'veg' ? "border-green-light bg-gradient-to-br from-[#FAFFFD] to-white" : "border-blue-light bg-gradient-to-br from-[#F2F8FF] to-white"
             )}
           >
             <div className={cn(
-              "w-12 h-12 rounded-full flex items-center justify-center text-2xl shrink-0",
-              idx > 1 ? "bg-gray-line" : previewTab === 'veg' ? "bg-green-light" : "bg-blue-light"
+              "w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-sm border border-white mt-0.5",
+              previewTab === 'veg' ? "bg-green-light text-green-main" : "bg-blue-light text-blue-main"
             )}>
-              {idx > 1 ? <Lock className="w-5 h-5 text-gray-lock" /> : task.icon}
+              {task.icon}
             </div>
-            <div>
+            <div className="flex-1">
               <div className={cn(
-                "text-[10px] font-black uppercase tracking-wider mb-0.5",
-                idx > 1 ? "text-gray-lock" : previewTab === 'veg' ? "text-green-main" : "text-blue-main"
+                "text-[10px] font-black uppercase tracking-[0.15em] mb-1",
+                previewTab === 'veg' ? "text-green-main" : "text-blue-main"
               )}>
-                關卡{['一','二','三','四'][idx]}・{task.title}
+                第 {['一','二','三','四'][idx]} 階段・{task.title}
               </div>
-              <div className="font-bold text-text-main leading-tight">{task.desc}</div>
+              <div className="font-black text-text-main leading-tight text-sm mb-1">{task.desc}</div>
+              <div className="text-[11px] text-text-sub font-semibold leading-relaxed">{task.fullDesc}</div>
             </div>
           </motion.div>
         ))}
@@ -609,7 +613,7 @@ export default function App() {
           </div>
         </div>
         
-        <div onScroll={handleScroll} className="flex-1 overflow-y-auto hide-scrollbar px-6 py-12 relative flex flex-col-reverse gap-20 pb-36">
+        <div onScroll={handleScroll} className="flex-1 overflow-y-auto hide-scrollbar px-6 py-12 relative flex flex-col gap-20 pb-36">
           <div className="absolute top-20 bottom-32 left-1/2 -translate-x-1/2 w-3 bg-gray-line rounded-full z-0 overflow-hidden">
             <motion.div 
               initial={{ height: 0 }}
@@ -619,7 +623,8 @@ export default function App() {
             />
           </div>
 
-          {tasks.map((task, idx) => {
+          {tasks.slice().reverse().map((task, reverseIdx) => {
+            const idx = 3 - reverseIdx;
             const status = idx + 1 < state.level ? 'done' : idx + 1 === state.level ? 'active' : 'locked';
             return (
               <motion.div 
@@ -937,26 +942,86 @@ export default function App() {
       }
     };
 
+    const levelThemes = [
+      {
+        bg: 'from-[#FAFFFD] to-white bg-green-light border-green-main/30',
+        badge: 'bg-green-main/10 text-green-main',
+        iconBg: 'bg-green-light border-green-main/10',
+        title: '階段一：察覺觀察',
+        shadow: 'shadow-[0_8px_30px_rgba(159,211,86,0.12)]'
+      },
+      {
+        bg: 'from-[#E1EEFA] to-white border-blue-main/30',
+        badge: 'bg-blue-main/10 text-blue-main',
+        iconBg: 'bg-blue-light border-blue-main/10',
+        title: '階段二：踏出選擇',
+        shadow: 'shadow-[0_8px_30px_rgba(60,145,230,0.12)]'
+      },
+      {
+        bg: 'from-[#E8F5D8] to-white border-[#84C318]/30',
+        badge: 'bg-[#84C318]/10 text-[#84C318]',
+        iconBg: 'bg-[#E8F5D8] border-[#84C318]/10',
+        title: '階段三：深化實踐',
+        shadow: 'shadow-[0_8px_30px_rgba(132,195,24,0.12)]'
+      },
+      {
+        bg: 'from-[#FFF0E5] to-white border-orange-main/30',
+        badge: 'bg-orange-main/10 text-orange-main',
+        iconBg: 'bg-[#FFF0E5] border-orange-main/10',
+        title: '階段四：擴散影響',
+        shadow: 'shadow-[0_8px_30px_rgba(255,159,28,0.12)]'
+      }
+    ];
+    const theme = levelThemes[Math.min(state.level - 1, 3)];
+
     return (
       <div className="px-6 py-8 min-h-full flex flex-col pt-12">
         <h2 className="text-2xl font-black text-text-main mb-8 flex items-center gap-2 tracking-tight">
           打卡任務 <span className="text-3xl">📸</span>
         </h2>
         
-        <div className="bg-green-light rounded-3xl p-6 mb-8 border border-green-main/20 relative overflow-hidden">
-          <div className="absolute right-[-20%] bottom-[-20%] text-9xl opacity-[0.07] transform rotate-12">✨</div>
-          <div className={cn(
-            "text-[10px] font-black mb-1.5 uppercase tracking-widest",
-            track === 'veg' ? 'text-green-main' : track === 'plastic' ? 'text-blue-main' : 'text-[#FF9F1C]'
-          )}>
-            關卡進度：{['一','二','三','四'][state.level-1]}
+        <div className={cn(
+          "bg-gradient-to-br rounded-[32px] p-6 mb-8 border relative overflow-hidden flex flex-col gap-4.5 transition-all duration-500",
+          theme.bg,
+          theme.shadow
+        )}>
+          <div className="absolute right-[-15%] bottom-[-15%] text-9xl opacity-[0.06] transform rotate-12 select-none pointer-events-none">✨</div>
+          
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              "w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0 shadow-sm border border-white/60",
+              theme.iconBg
+            )}>
+              {task.icon}
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={cn(
+                  "text-[11px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider",
+                  theme.badge
+                )}>
+                  第 {['一','二','三','四'][state.level-1]} 關
+                </span>
+                <span className="text-[10px] font-black text-text-sub uppercase tracking-widest opacity-80">
+                  {theme.title}
+                </span>
+              </div>
+              <h4 className="font-black text-text-main text-base mt-1.5 tracking-tight">
+                任務目標：{task.title}
+              </h4>
+            </div>
           </div>
-          <h3 className="font-black text-text-main text-lg mb-2 leading-tight">
-            {task.fullDesc}
-          </h3>
-          <p className="text-[12px] text-text-sub font-medium leading-relaxed">
-            請描述你今天的行動與感受吧！記錄下美好的改變。
-          </p>
+
+          <div className="h-[1px] bg-black/5 w-full my-0.5"></div>
+
+          <div>
+            <h3 className="font-black text-text-main text-lg mb-2.5 leading-snug">
+              {task.fullDesc}
+            </h3>
+            <p className="text-[12px] text-text-sub font-semibold leading-relaxed">
+              💡 點擊下方輸入框，我們已為你填入這一關的打卡實用範例囉，隨時都可以修改成你的真實體驗！
+            </p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
