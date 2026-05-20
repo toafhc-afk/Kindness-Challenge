@@ -95,6 +95,26 @@ export default function App() {
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
   const [showRewardModal, setShowRewardModal] = useState<Track | null>(null);
 
+  const lastScrollY = React.useRef(0);
+  const [isNavVisible, setIsNavVisible] = useState(true);
+
+  useEffect(() => {
+    setIsNavVisible(true);
+    lastScrollY.current = 0;
+  }, [currentView]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const currentScrollY = e.currentTarget.scrollTop;
+    if (Math.abs(currentScrollY - lastScrollY.current) > 15) {
+      if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+        setIsNavVisible(false);
+      } else {
+        setIsNavVisible(true);
+      }
+      lastScrollY.current = currentScrollY;
+    }
+  };
+
   // Sync firebase state to local state
   useEffect(() => {
     if (firebaseState) {
@@ -499,7 +519,7 @@ export default function App() {
           </div>
         </div>
         
-        <div className="flex-1 overflow-y-auto hide-scrollbar px-6 py-12 relative flex flex-col-reverse gap-20">
+        <div onScroll={handleScroll} className="flex-1 overflow-y-auto hide-scrollbar px-6 py-12 relative flex flex-col-reverse gap-20">
           <div className="absolute top-20 bottom-32 left-1/2 -translate-x-1/2 w-3 bg-gray-line rounded-full z-0 overflow-hidden">
             <motion.div 
               initial={{ height: 0 }}
@@ -1217,6 +1237,7 @@ export default function App() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -15 }}
           transition={{ type: 'spring', damping: 25, stiffness: 400 }}
+          onScroll={handleScroll}
           className="flex-1 overflow-y-auto hide-scrollbar pb-[calc(7.5rem+env(safe-area-inset-bottom,0px))]"
         >
           {currentView === 'preview' && <PreviewView />}
@@ -1232,7 +1253,7 @@ export default function App() {
 
       <nav id="bottom-nav" className={cn(
         "absolute bottom-0 left-0 w-full h-[calc(6rem+env(safe-area-inset-bottom,0px))] pb-[env(safe-area-inset-bottom,0px)] bg-white/95 backdrop-blur-xl border-t border-gray-line/50 flex justify-around items-center px-4 z-40 transition-all duration-500",
-        ['preview', 'select'].includes(currentView) ? "translate-y-full opacity-0" : "translate-y-0 opacity-100"
+        ['preview', 'select'].includes(currentView) || !isNavVisible ? "translate-y-full opacity-0" : "translate-y-0 opacity-100"
       )}>
         <NavItem active={currentView === 'dashboard'} onClick={() => handleNav('dashboard')} icon={<Home />} label="首頁" />
         <NavItem active={currentView === 'map'} onClick={() => handleNav('map')} icon={<MapIcon />} label="地圖" />
