@@ -14,3 +14,12 @@ export function calculateLevel(exp: number, expReqs: number[]) {
   }
   return Math.min(currentLv, 5);
 }
+
+export function getLevelForTrack(track: string, unlockedBadges: string[]): number {
+  if (unlockedBadges.includes(`${track}_complete`)) return 4;
+  if (unlockedBadges.includes(`${track}_3`)) return 4;
+  if (unlockedBadges.includes(`${track}_2`)) return 3;
+  if (unlockedBadges.includes(`${track}_1`)) return 2;
+  return 1;
+}
+

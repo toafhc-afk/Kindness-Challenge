@@ -6,7 +6,7 @@ import { AuthProvider } from './lib/AuthContext.tsx';
 
 import React, { Component, ReactNode } from 'react';
 
-class ErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean, error: Error | null}> {
+class ErrorBoundary extends React.Component<any, any> {
   state = { hasError: false, error: null };
   static getDerivedStateFromError(error: Error) { return { hasError: true, error }; }
   componentDidCatch(error: Error, errorInfo: any) { console.error(error, errorInfo); }
@@ -20,7 +20,7 @@ class ErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean,
         </div>
       );
     }
-    return this.props.children;
+    return (this as any).props.children;
   }
 }
 

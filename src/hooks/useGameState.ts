@@ -12,6 +12,8 @@ const defaultState: AppState = {
   checkInCount: 0,
   co2Saved: 0,
   unlockedBadges: ['novice'],
+  badgeUnlockDates: {},
+  claimedRewards: [],
   lastCheckInDate: null,
 };
 

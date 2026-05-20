@@ -38,8 +38,8 @@ import { loginWithGoogle, auth, db, storage } from './lib/firebase';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit, onSnapshot, deleteDoc, arrayUnion } from 'firebase/firestore';
 import { TRACK_DATA, LEVELS_EXP_REQ, TITLES, TITLES_BY_TRACK, BADGES } from './constants';
-import { View, Track, Task, AppState } from './types';
-import { cn, calculateLevel } from './lib/utils';
+import { View, Track, Task, AppState, Badge } from './types';
+import { cn, calculateLevel, getLevelForTrack } from './lib/utils';
 
 enum OperationType {
   CREATE = 'create',
@@ -461,7 +461,7 @@ export default function App() {
       <div className="bg-gray-line/50 p-4 rounded-xl flex gap-3 mb-8">
         <Info className="w-5 h-5 text-gray-lock shrink-0 mt-0.5" />
         <p className="text-[11px] text-gray-lock leading-relaxed font-medium">
-          首次打卡後將鎖定軌道，請先選擇最想實踐的改變。
+          你可以隨時切換挑戰軌道，所有軌道的進度皆會自動保留！集齊全部 3 個軌道的所有徽章，即可解鎖最高榮耀【永續守護神】！🏆
         </p>
       </div>
 
@@ -469,7 +469,8 @@ export default function App() {
         <button 
           onClick={() => {
             if (tempTrack) {
-              updateFirebaseState({ track: tempTrack, level: 1 });
+              const targetLevel = getLevelForTrack(tempTrack, state.unlockedBadges);
+              updateFirebaseState({ track: tempTrack, level: targetLevel });
               setCurrentView('dashboard');
             }
           }}
@@ -479,13 +480,19 @@ export default function App() {
             tempTrack ? "bg-text-main text-white" : "bg-gray-lock text-white/50 cursor-not-allowed"
           )}
         >
-          確認，開始挑戰
+          {state.track ? "確認，切換此軌道" : "確認，開始挑戰"}
         </button>
         <button 
-          onClick={() => setCurrentView('preview')}
+          onClick={() => {
+            if (state.track) {
+              setCurrentView('dashboard');
+            } else {
+              setCurrentView('preview');
+            }
+          }}
           className="w-full text-text-sub font-bold py-3 text-sm flex items-center justify-center gap-1 opacity-70 hover:opacity-100 transition-opacity"
         >
-          <ChevronLeft className="w-4 h-4" /> 回去看看任務內容
+          <ChevronLeft className="w-4 h-4" /> {state.track ? "回首頁" : "回去看看任務內容"}
         </button>
       </div>
     </div>
@@ -586,29 +593,58 @@ export default function App() {
         </div>
 
         <div className="px-6 py-8">
-          {/* Current Task */}
-          <motion.div 
-            whileHover={{ scale: 1.02 }}
-            className="bg-white rounded-[32px] p-6 shadow-soft relative overflow-hidden group border-l-[6px]"
-            style={{ borderColor: tc }}
-          >
-            <div className="absolute -right-6 -top-6 text-8xl opacity-[0.03] group-hover:scale-110 transition-transform">🎯</div>
-            <span className="text-[10px] font-black px-3 py-1.5 rounded-xl mb-3 inline-block uppercase tracking-widest" style={{ backgroundColor: tl, color: tc }}>
-              主線任務
-            </span>
-            <h3 className="font-black text-xl text-text-main mb-1 tracking-tight">
-              關卡{['一','二','三','四'][currentTaskData.id-1]}：{currentTaskData.title}
-            </h3>
-            <p className="text-[13px] text-text-sub mb-6 leading-relaxed font-medium">
-              {currentTaskData.desc}
-            </p>
-            <button 
-              onClick={() => handleNav('map')} 
-              className="w-full bg-text-main text-white font-black py-4 rounded-2xl text-sm btn-active flex items-center justify-center gap-2"
+          {/* Current Task or Complete Celebration */}
+          {state.unlockedBadges.includes(`${track}_complete`) ? (
+            <motion.div 
+              whileHover={{ scale: 1.02 }}
+              className="bg-white rounded-[32px] p-6 shadow-soft relative overflow-hidden group border-l-[6px]"
+              style={{ borderColor: tc }}
             >
-              前往挑戰地圖 <ChevronRight className="w-4 h-4" />
-            </button>
-          </motion.div>
+              <div className="absolute -right-6 -top-6 text-8xl opacity-[0.03] group-hover:scale-110 transition-transform">🏆</div>
+              <span className="text-[10px] font-black px-3 py-1.5 rounded-xl mb-3 inline-block uppercase tracking-widest bg-yellow-100 text-yellow-600">
+                榮譽里程碑
+              </span>
+              <h3 className="font-black text-xl text-text-main mb-1 tracking-tight">
+                恭喜完成{track === 'veg' ? '蔬食' : track === 'plastic' ? '淨塑' : '雙軌'}任務！✨
+              </h3>
+              <p className="text-[13px] text-text-sub mb-6 leading-relaxed font-medium">
+                你已經成功集滿本軌道的 4 枚關卡章！挑戰其他軌道，集齊全部徽章以獲得最高榮耀【永續守護神】吧！
+              </p>
+              <button 
+                onClick={() => {
+                  setTempTrack(track);
+                  setCurrentView('select');
+                }} 
+                className="w-full text-white font-black py-4 rounded-2xl text-sm btn-active flex items-center justify-center gap-2"
+                style={{ backgroundColor: tc }}
+              >
+                挑戰其他軌道 <ChevronRight className="w-4 h-4" />
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div 
+              whileHover={{ scale: 1.02 }}
+              className="bg-white rounded-[32px] p-6 shadow-soft relative overflow-hidden group border-l-[6px]"
+              style={{ borderColor: tc }}
+            >
+              <div className="absolute -right-6 -top-6 text-8xl opacity-[0.03] group-hover:scale-110 transition-transform">🎯</div>
+              <span className="text-[10px] font-black px-3 py-1.5 rounded-xl mb-3 inline-block uppercase tracking-widest" style={{ backgroundColor: tl, color: tc }}>
+                主線任務
+              </span>
+              <h3 className="font-black text-xl text-text-main mb-1 tracking-tight">
+                關卡{['一','二','三','四'][currentTaskData.id-1]}：{currentTaskData.title}
+              </h3>
+              <p className="text-[13px] text-text-sub mb-6 leading-relaxed font-medium">
+                {currentTaskData.desc}
+              </p>
+              <button 
+                onClick={() => handleNav('map')} 
+                className="w-full bg-text-main text-white font-black py-4 rounded-2xl text-sm btn-active flex items-center justify-center gap-2"
+              >
+                前往挑戰地圖 <ChevronRight className="w-4 h-4" />
+              </button>
+            </motion.div>
+          )}
         </div>
       </div>
     );
@@ -619,6 +655,8 @@ export default function App() {
     const data = TRACK_DATA[track];
     const tasks = data.tasks;
     const isTrackCompleted = state.unlockedBadges.includes(`${track}_complete`);
+    const tc = data.themeColor;
+    const tl = data.lightColor;
 
     let progressPercent = 0;
     if (isTrackCompleted) {
@@ -725,7 +763,7 @@ export default function App() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setSelectedMapTaskIndex(null)}
-                className="fixed inset-0 bg-black/40 z-30 max-w-[400px] mx-auto"
+                className="fixed inset-0 bg-black/40 z-50 max-w-[400px] mx-auto"
               />
               
               {/* Slide up Bottom Sheet */}
@@ -734,7 +772,7 @@ export default function App() {
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[400px] bg-white rounded-t-[40px] shadow-float p-8 z-40 border-t border-gray-line/50 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))]"
+                className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[400px] bg-white rounded-t-[40px] shadow-float p-8 z-[60] border-t border-gray-line/50 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))]"
               >
                 {/* Visual drag indicator */}
                 <div className="w-12 h-1.5 bg-gray-line/60 rounded-full mx-auto mb-6" />
@@ -777,12 +815,16 @@ export default function App() {
                       setSelectedMapTaskIndex(null);
                       handleNav('checkin');
                     }} 
-                    className="w-full bg-green-main text-white font-black py-4 rounded-2xl text-sm btn-active shadow-lg shadow-green-main/20 flex items-center justify-center gap-2 hover:scale-[0.98] transition-transform"
+                    className="w-full text-white font-black py-4 rounded-2xl text-sm btn-active shadow-lg flex items-center justify-center gap-2 hover:scale-[0.98] transition-transform"
+                    style={{ backgroundColor: tc, boxShadow: `0 10px 15px -3px ${tc}33` }}
                   >
                     立即打卡行動 <Camera className="w-4 h-4" />
                   </button>
                 ) : selectedMapTaskIndex + 1 < state.level ? (
-                  <div className="w-full bg-green-light text-green-main font-black py-4 rounded-2xl text-sm text-center border border-green-main/10 shadow-sm flex items-center justify-center gap-2">
+                  <div 
+                    className="w-full font-black py-4 rounded-2xl text-sm text-center border shadow-sm flex items-center justify-center gap-2"
+                    style={{ backgroundColor: tl, color: tc, borderColor: `${tc}20` }}
+                  >
                     你已經順利完成了此關卡！✨
                   </div>
                 ) : (
@@ -978,7 +1020,7 @@ export default function App() {
       }
     };
 
-    const allTrackThemes: Record<string, typeof levelThemesVeg> = {
+    const allTrackThemes: Record<string, { bg: string; badge: string; iconBg: string; title: string; shadow: string; }[]> = {
       veg: [
         { bg: 'from-[#FAFFFD] to-white bg-green-light border-green-main/30', badge: 'bg-green-main/10 text-green-main', iconBg: 'bg-green-light border-green-main/10', title: '階段一：察覺觀察', shadow: 'shadow-[0_8px_30px_rgba(159,211,86,0.12)]' },
         { bg: 'from-[#E8F5D8] to-white border-[#84C318]/30', badge: 'bg-[#84C318]/10 text-[#84C318]', iconBg: 'bg-[#E8F5D8] border-[#84C318]/10', title: '階段二：踏出選擇', shadow: 'shadow-[0_8px_30px_rgba(132,195,24,0.12)]' },
@@ -1415,11 +1457,16 @@ export default function App() {
     const prevReq = LEVELS_EXP_REQ[lv-1];
     const progress = ((state.exp - prevReq) / (expReq - prevReq)) * 100;
 
+    const track = state.track || 'veg';
+    const data = TRACK_DATA[track];
+    const tc = data.themeColor;
+    const tl = data.lightColor;
+
     return (
       <div className="flex flex-col min-h-full bg-white-main">
         <div className="bg-white rounded-b-[48px] shadow-soft px-8 py-12 mb-8 border-b border-gray-line/50">
           <div className="flex items-center gap-6 mb-10">
-            <div className="w-24 h-24 rounded-full bg-green-light border-[6px] border-white shadow-float overflow-hidden shrink-0">
+            <div className="w-24 h-24 rounded-full border-[6px] border-white shadow-float overflow-hidden shrink-0" style={{ backgroundColor: tl }}>
               <img 
                 src={`https://api.dicebear.com/7.x/notionists/svg?seed=${state.track || 'felix'}&backgroundColor=transparent`} 
                 alt="Avatar" 
@@ -1429,11 +1476,11 @@ export default function App() {
             <div>
               <h2 className="text-24pt font-black text-text-main tracking-tight leading-tight">{user?.displayName || '探險家'}</h2>
               <div className="flex items-center gap-3 mt-3">
-                <span className="bg-text-main text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                <span className="text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest" style={{ backgroundColor: tc }}>
                   Lv.{lv}
                 </span>
-                <span className="text-xs text-green-main font-black tracking-wide underline decoration-2 underline-offset-4">
-                  {TITLES[lv-1]}
+                <span className="text-xs font-black tracking-wide underline decoration-2 underline-offset-4" style={{ color: tc }}>
+                  {(TITLES_BY_TRACK[track] ?? TITLES)[lv - 1]}
                 </span>
               </div>
             </div>
@@ -1442,13 +1489,14 @@ export default function App() {
           <div className="bg-gray-line/40 rounded-3xl p-6 shadow-inner-soft">
             <div className="flex justify-between items-center text-[11px] mb-3">
               <span className="font-black text-text-sub uppercase tracking-widest">目前稱號路徑</span>
-              <span className="font-black text-green-main tracking-tighter text-sm">{state.exp} / {expReq} EXP</span>
+              <span className="font-black tracking-tighter text-sm" style={{ color: tc }}>{state.exp} / {expReq} EXP</span>
             </div>
             <div className="bg-white rounded-full h-3 overflow-hidden shadow-inner">
               <motion.div 
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min(progress, 100)}%` }}
-                className="h-full bg-green-main rounded-full shadow-[0_0_10px_rgba(159,211,86,0.4)]"
+                className="h-full rounded-full shadow-[0_0_10px_rgba(159,211,86,0.4)]"
+                style={{ backgroundColor: tc }}
               />
             </div>
           </div>
@@ -1547,6 +1595,16 @@ export default function App() {
         </div>
 
         <div className="px-8 mt-4 pb-32 flex flex-col gap-4">
+          <button 
+            onClick={() => {
+              setTempTrack(state.track);
+              setCurrentView('select');
+            }}
+            className="w-full bg-white border border-gray-line text-text-main font-black py-4 rounded-2xl btn-active shadow-sm flex items-center justify-center gap-2"
+          >
+            🔄 切換挑戰軌道
+          </button>
+
           <button 
             onClick={() => signOut(auth)}
             className="w-full bg-text-main text-white font-black py-4 rounded-2xl btn-active shadow-float flex items-center justify-center gap-2"
