@@ -592,14 +592,28 @@ export default function App() {
     const data = TRACK_DATA[track];
     const tasks = data.tasks;
     const isTrackCompleted = state.unlockedBadges.includes(`${track}_complete`);
+    const mapContainerRef = React.useRef<HTMLDivElement>(null);
+
+    // Scroll to bottom on mount so Level 1 is visible first
+    React.useEffect(() => {
+      if (mapContainerRef.current) {
+        mapContainerRef.current.scrollTop = mapContainerRef.current.scrollHeight;
+      }
+    }, []);
+
+    // Progress fills from bottom (level 1) upward.
+    // Level 1 active = 0% fill (nothing completed yet)
+    // Level 2 active = 33% (level 1 done)
+    // Level 3 active = 67% (levels 1-2 done)
+    // Level 4 active = 100% (levels 1-3 done)
     let progressPercent = 0;
     if (isTrackCompleted) {
       progressPercent = 100;
     } else {
-      if (state.level === 1) progressPercent = 12;
-      else if (state.level === 2) progressPercent = 38;
-      else if (state.level === 3) progressPercent = 64;
-      else progressPercent = 90;
+      if (state.level === 1) progressPercent = 0;
+      else if (state.level === 2) progressPercent = 33;
+      else if (state.level === 3) progressPercent = 67;
+      else progressPercent = 100;
     }
 
     return (
@@ -613,8 +627,8 @@ export default function App() {
           </div>
         </div>
         
-        <div onScroll={handleScroll} className="flex-1 overflow-y-auto hide-scrollbar px-6 py-12 relative flex flex-col gap-20" style={{ paddingBottom: 'calc(8rem + env(safe-area-inset-bottom, 0px))' }}>
-          <div className="absolute top-20 h-[680px] left-1/2 -translate-x-1/2 w-3 bg-gray-line rounded-full z-0 overflow-hidden">
+        <div ref={mapContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto hide-scrollbar px-6 py-12 relative flex flex-col gap-20" style={{ paddingBottom: 'calc(8rem + env(safe-area-inset-bottom, 0px))' }}>
+          <div className="absolute top-12 h-[640px] left-1/2 -translate-x-1/2 w-3 bg-gray-line rounded-full z-0 overflow-hidden">
             <motion.div 
               initial={{ height: 0 }}
               animate={{ height: `${progressPercent}%` }}
