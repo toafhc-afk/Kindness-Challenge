@@ -614,7 +614,7 @@ export default function App() {
         </div>
         
         <div onScroll={handleScroll} className="flex-1 overflow-y-auto hide-scrollbar px-6 py-12 relative flex flex-col gap-20" style={{ paddingBottom: 'calc(8rem + env(safe-area-inset-bottom, 0px))' }}>
-          <div className="absolute top-20 bottom-32 left-1/2 -translate-x-1/2 w-3 bg-gray-line rounded-full z-0 overflow-hidden">
+          <div className="absolute top-20 h-[680px] left-1/2 -translate-x-1/2 w-3 bg-gray-line rounded-full z-0 overflow-hidden">
             <motion.div 
               initial={{ height: 0 }}
               animate={{ height: `${progressPercent}%` }}
