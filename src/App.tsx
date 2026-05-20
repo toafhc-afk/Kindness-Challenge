@@ -312,7 +312,7 @@ export default function App() {
 
   // --- View Components ---
 
-  const PreviewView = () => (
+  const renderPreviewView = () => (
     <div className="px-6 py-8">
       <h1 className="text-2xl font-black text-text-main text-center mb-2 tracking-tight">慈心大挑戰</h1>
       <p className="text-xs text-text-sub text-center mb-6 font-bold leading-relaxed px-4">
@@ -389,7 +389,7 @@ export default function App() {
     </div>
   );
 
-  const SelectView = () => (
+  const renderSelectView = () => (
     <div className="px-6 py-8">
       <h1 className="text-2xl font-black text-text-main mb-2">選擇你的挑戰軌道</h1>
       <p className="text-sm text-text-sub mb-8 font-medium">選擇適合你的路線，開啟你的慈心旅程！</p>
@@ -613,7 +613,7 @@ export default function App() {
           </div>
         </div>
         
-        <div onScroll={handleScroll} className="flex-1 overflow-y-auto hide-scrollbar px-6 py-12 relative flex flex-col gap-20 pb-36">
+        <div onScroll={handleScroll} className="flex-1 overflow-y-auto hide-scrollbar px-6 py-12 relative flex flex-col gap-20 pb-52">
           <div className="absolute top-20 bottom-32 left-1/2 -translate-x-1/2 w-3 bg-gray-line rounded-full z-0 overflow-hidden">
             <motion.div 
               initial={{ height: 0 }}
@@ -1591,8 +1591,8 @@ export default function App() {
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto hide-scrollbar pb-[calc(7.5rem+env(safe-area-inset-bottom,0px))]"
         >
-          {currentView === 'preview' && <PreviewView />}
-          {currentView === 'select' && <SelectView />}
+          {currentView === 'preview' && renderPreviewView()}
+          {currentView === 'select' && renderSelectView()}
           {currentView === 'dashboard' && <DashboardView />}
           {currentView === 'map' && <MapView />}
           {currentView === 'checkin' && renderCheckinView()}
