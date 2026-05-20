@@ -6,6 +6,7 @@ export interface Task {
   desc: string;
   fullDesc: string;
   icon: string;
+  placeholder?: string;
 }
 
 export interface TrackData {

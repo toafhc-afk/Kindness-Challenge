@@ -482,6 +482,17 @@ export default function App() {
     const track = state.track || 'veg';
     const currentTaskData = TRACK_DATA[track].tasks[Math.min(state.level - 1, 3)];
 
+    // Compute dynamic, real-time social influence partners
+    const userPosts = globalFeed.filter(p => p.userId === user?.uid);
+    const totalLikes = userPosts.reduce((acc, p) => acc + (p.likes || 0), 0);
+    const uniqueCommenters = new Set(
+      userPosts
+        .flatMap(p => p.comments || [])
+        .map(c => c.userId || c.userName)
+        .filter(Boolean)
+    );
+    const influencePartners = (state.checkInCount * 3) + totalLikes + uniqueCommenters.size;
+
     return (
       <div className="flex flex-col min-h-full bg-white-main">
         <div className="bg-gradient-to-b from-green-light to-white-main px-6 pt-10 pb-8 rounded-b-[40px] shadow-sm">
@@ -523,12 +534,25 @@ export default function App() {
           </div>
           
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 mb-4">
             <StatCard icon={<Leaf className="w-4 h-4" />} color="green" label="完成關卡" value={state.level - 1} />
             <StatCard icon={<Cloud className="w-4 h-4" />} color="blue" label="減碳量 (kg)" value={state.co2Saved.toFixed(1)} />
             <StatCard icon={<Flame className="w-4 h-4" />} color="orange" label="連續打卡" value={`${state.streak}天`} />
-            <StatCard icon={<Users className="w-4 h-4" />} color="cyan" label="影響夥伴" value="0" />
+            <StatCard icon={<Users className="w-4 h-4" />} color="cyan" label="影響夥伴" value={influencePartners} />
           </div>
+
+          {state.co2Saved > 0 && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-[10px] font-black bg-green-light/40 border border-green-main/10 text-green-main p-3.5 rounded-2xl flex items-start gap-2 leading-relaxed shadow-sm"
+            >
+              <span className="text-xs shrink-0 mt-0.5">🌲</span>
+              <span>
+                累計減碳成果相當於種植了 <strong className="underline decoration-2">{(state.co2Saved * 0.08).toFixed(2)} 棵樹</strong> 一整年吸收的 CO₂ 量，或減少駕駛燃油車行駛 <strong className="underline decoration-2">{(state.co2Saved * 5.2).toFixed(1)} 公里</strong> 喔！謝謝你為地球做出的努力！💚
+              </span>
+            </motion.div>
+          )}
         </div>
 
         <div className="px-6 py-8">
@@ -563,7 +587,16 @@ export default function App() {
     const track = state.track || 'veg';
     const data = TRACK_DATA[track];
     const tasks = data.tasks;
-    const progressPercent = ((state.level - 1) / 3) * 100;
+    const isTrackCompleted = state.unlockedBadges.includes(`${track}_complete`);
+    let progressPercent = 0;
+    if (isTrackCompleted) {
+      progressPercent = 100;
+    } else {
+      if (state.level === 1) progressPercent = 12;
+      else if (state.level === 2) progressPercent = 38;
+      else if (state.level === 3) progressPercent = 64;
+      else progressPercent = 90;
+    }
 
     return (
       <div className="flex flex-col h-full overflow-hidden relative" style={{ backgroundColor: data.bg }}>
@@ -934,7 +967,7 @@ export default function App() {
               onChange={(e) => setCheckinText(e.target.value)}
               rows={4} 
               className="w-full bg-gray-line/50 border-2 border-transparent rounded-2xl p-4 text-base focus:outline-none focus:border-green-main focus:bg-white transition-all resize-none shadow-inner-soft" 
-              placeholder="例如：今天中午吃了一間很棒的素食餐廳！" 
+              placeholder={task.placeholder || "例如：今天中午吃了一間很棒的素食餐廳！"} 
               required
             />
           </div>
@@ -1339,7 +1372,11 @@ export default function App() {
             { id: 'veg', name: '蔬食行動', color: 'from-[#E8F5D8] to-[#9FD356]', border: 'border-[#9FD356]' },
             { id: 'plastic', name: '淨塑行動', color: 'from-[#E1EEFA] to-[#3C91E6]', border: 'border-[#3C91E6]' },
             { id: 'dual', name: '雙軌挑戰', color: 'from-[#FFF0E5] to-[#FF9F1C]', border: 'border-[#FF9F1C]' }
-          ].map(trackInfo => (
+          ].sort((a, b) => {
+            if (a.id === state.track) return -1;
+            if (b.id === state.track) return 1;
+            return 0;
+          }).map(trackInfo => (
             <div key={trackInfo.id} className="mb-12">
               <div className="flex items-center gap-3 mb-6">
                 <div className="h-[1px] flex-1 bg-gray-line/50"></div>
