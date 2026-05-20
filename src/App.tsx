@@ -1480,7 +1480,7 @@ export default function App() {
                   Lv.{lv}
                 </span>
                 <span className="text-xs font-black tracking-wide underline decoration-2 underline-offset-4" style={{ color: tc }}>
-                  {(TITLES_BY_TRACK[track] ?? TITLES)[lv - 1]}
+                  {TITLES[lv - 1]}
                 </span>
               </div>
             </div>
