@@ -933,7 +933,7 @@ export default function App() {
               value={checkinText}
               onChange={(e) => setCheckinText(e.target.value)}
               rows={4} 
-              className="w-full bg-gray-line/50 border-2 border-transparent rounded-2xl p-4 text-sm focus:outline-none focus:border-green-main focus:bg-white transition-all resize-none shadow-inner-soft" 
+              className="w-full bg-gray-line/50 border-2 border-transparent rounded-2xl p-4 text-base focus:outline-none focus:border-green-main focus:bg-white transition-all resize-none shadow-inner-soft" 
               placeholder="例如：今天中午吃了一間很棒的素食餐廳！" 
               required
             />
@@ -1153,7 +1153,7 @@ export default function App() {
                                 <textarea
                                   value={editingCommentText}
                                   onChange={(e) => setEditingCommentText(e.target.value)}
-                                  className="w-full bg-white border border-gray-line rounded-xl p-2 text-xs focus:outline-none focus:border-green-main resize-none"
+                                  className="w-full bg-white border border-gray-line rounded-xl p-2 text-base focus:outline-none focus:border-green-main resize-none"
                                   rows={2}
                                 />
                                 <div className="flex gap-2 justify-end">
@@ -1208,7 +1208,7 @@ export default function App() {
                     onChange={(e) => setCommentInputText(e.target.value)}
                     placeholder="寫下你的溫暖回饋..." 
                     rows={1}
-                    className="flex-1 bg-gray-line/40 border border-transparent rounded-2xl px-4 py-2.5 text-xs focus:outline-none focus:border-green-main focus:bg-white transition-all shadow-inner-soft resize-none min-h-[38px] max-h-20"
+                    className="flex-1 bg-gray-line/40 border border-transparent rounded-2xl px-4 py-2.5 text-base focus:outline-none focus:border-green-main focus:bg-white transition-all shadow-inner-soft resize-none min-h-[38px] max-h-20"
                     required
                   />
                   <button type="submit" className="bg-text-main text-white px-4 py-2.5 rounded-2xl text-xs font-black hover:bg-green-main hover:scale-95 transition-all shrink-0 btn-active shadow-sm flex items-center justify-center min-h-[38px]">
@@ -1620,9 +1620,28 @@ export default function App() {
                   </p>
                 </div>
               ) : (
-                <p className="text-[15px] text-text-sub mb-8 leading-relaxed font-medium px-2">
-                  這段旅程的小小印記。<br/>謝謝你把善意放進日常。
-                </p>
+                <>
+                  <p className="text-[14px] text-text-sub mb-5 leading-relaxed font-medium px-2">
+                    這段旅程的小小印記。<br/>謝謝你把善意放進日常。
+                  </p>
+                  
+                  {/* Celebratory Next Steps Guidance */}
+                  <div className="bg-green-light rounded-3xl p-5 mb-8 border border-green-main/20 text-left">
+                    <div className="text-[10px] font-black text-green-main uppercase tracking-[0.15em] mb-2.5 flex items-center gap-1">
+                      <span>✨ 下一步指南</span>
+                    </div>
+                    <ul className="space-y-2 text-xs font-bold text-text-main leading-relaxed">
+                      <li className="flex items-start gap-2">
+                        <span className="shrink-0 text-sm">📸</span>
+                        <span>您的精采打卡已同步發布至<strong className="text-green-main">「探索動態」</strong>，快去看看大家給你的溫暖留言吧！</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="shrink-0 text-sm">🗺️</span>
+                        <span>現在可前往<strong className="text-green-main">「地圖」</strong>點選下一關，解鎖並挑戰新的慈心任務！</span>
+                      </li>
+                    </ul>
+                  </div>
+                </>
               )}
 
               <button 
@@ -1634,7 +1653,7 @@ export default function App() {
                     if (currentBadge.type === 'completeBadge') {
                       setShowRewardModal(currentBadge.track);
                     } else {
-                      setCurrentView('feed');
+                      setCurrentView('profile');
                     }
                   }
                 }}
