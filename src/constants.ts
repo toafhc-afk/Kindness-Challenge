@@ -1,7 +1,7 @@
 import { TrackData, Badge, Track } from './types';
 
 export const LEVELS_EXP_REQ = [0, 100, 250, 450, 700];
-export const TITLES = ['綠芽學徒', '行動探索者', '慈心實踐家', '永續影響者', '地球守護神'];
+export const TITLES = ['地球探索者', '行動先行者', '善行實踐家', '慈心影響者', '永續守護神'];
 
 export const TITLES_BY_TRACK: Record<string, string[]> = {
   veg:     ['綠芽學徒',   '行動探索者',   '慈心實踐家',   '永續影響者',   '地球守護神'],

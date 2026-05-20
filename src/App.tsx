@@ -511,9 +511,19 @@ export default function App() {
     );
     const influencePartners = (state.checkInCount * 3) + totalLikes + uniqueCommenters.size;
 
+    // Track-specific theme colors
+    const trackData = TRACK_DATA[track];
+    const tc = trackData.themeColor;   // e.g. '#9FD356' / '#3C91E6' / '#FF9F1C'
+    const tl = trackData.lightColor;   // light bg variant
+    const heroGrad = track === 'veg'
+      ? 'from-[#E8F5D8]'
+      : track === 'plastic'
+      ? 'from-[#DAEEFF]'
+      : 'from-[#FFF0D0]';
+
     return (
       <div className="flex flex-col min-h-full bg-white-main">
-        <div className="bg-gradient-to-b from-green-light to-white-main px-6 pt-10 pb-8 rounded-b-[40px] shadow-sm">
+        <div className={`bg-gradient-to-b ${heroGrad} to-white-main px-6 pt-10 pb-8 rounded-b-[40px] shadow-sm`}>
           <div className="flex justify-between items-center mb-8">
             <div>
               <h2 className="text-2xl font-black text-text-main flex items-center gap-2 tracking-tight">
@@ -523,7 +533,8 @@ export default function App() {
             </div>
             <motion.div 
               whileHover={{ scale: 1.05 }}
-              className="w-14 h-14 rounded-full bg-white shadow-lg border-2 border-green-main p-1 overflow-hidden"
+              className="w-14 h-14 rounded-full bg-white shadow-lg p-1 overflow-hidden border-2"
+              style={{ borderColor: tc }}
             >
               <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${state.track || 'anon'}&backgroundColor=transparent`} alt="Avatar" />
             </motion.div>
@@ -533,20 +544,21 @@ export default function App() {
           <div className="bg-white rounded-3xl p-5 shadow-float mb-8 border border-white">
             <div className="flex justify-between items-end mb-3">
               <div className="flex items-center gap-2">
-                <div className="bg-green-main text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider">
+                <div className="text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider" style={{ backgroundColor: tc }}>
                   Lv.{lv}
                 </div>
-                <span className="font-bold text-text-main text-sm">{(TITLES_BY_TRACK[state.track || 'veg'] ?? TITLES)[lv - 1]}</span>
+                <span className="font-bold text-text-main text-sm">{(TITLES_BY_TRACK[track] ?? TITLES)[lv - 1]}</span>
               </div>
               <div className="text-[11px] font-bold text-text-sub/70">
-                <span className="text-green-main font-black underline decoration-2 underline-offset-4">{state.exp}</span> / {expReq} EXP
+                <span className="font-black underline decoration-2 underline-offset-4" style={{ color: tc }}>{state.exp}</span> / {expReq} EXP
               </div>
             </div>
             <div className="bg-gray-line rounded-full h-3 overflow-hidden shadow-inner-soft">
               <motion.div 
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min(progress, 100)}%` }}
-                className="h-full bg-green-main rounded-full"
+                className="h-full rounded-full"
+                style={{ backgroundColor: tc }}
               />
             </div>
           </div>
@@ -577,10 +589,11 @@ export default function App() {
           {/* Current Task */}
           <motion.div 
             whileHover={{ scale: 1.02 }}
-            className="bg-white rounded-[32px] p-6 shadow-soft border-l-[6px] border-green-main relative overflow-hidden group"
+            className="bg-white rounded-[32px] p-6 shadow-soft relative overflow-hidden group border-l-[6px]"
+            style={{ borderColor: tc }}
           >
             <div className="absolute -right-6 -top-6 text-8xl opacity-[0.03] group-hover:scale-110 transition-transform">🎯</div>
-            <span className="text-[10px] font-black bg-green-light text-green-main px-3 py-1.5 rounded-xl mb-3 inline-block uppercase tracking-widest">
+            <span className="text-[10px] font-black px-3 py-1.5 rounded-xl mb-3 inline-block uppercase tracking-widest" style={{ backgroundColor: tl, color: tc }}>
               主線任務
             </span>
             <h3 className="font-black text-xl text-text-main mb-1 tracking-tight">
@@ -1621,7 +1634,7 @@ export default function App() {
 
       <nav id="bottom-nav" className={cn(
         "absolute bottom-0 left-0 w-full h-[calc(6rem+env(safe-area-inset-bottom,0px))] pb-[env(safe-area-inset-bottom,0px)] bg-white/95 backdrop-blur-xl border-t border-gray-line/50 flex justify-around items-center px-4 z-40 transition-all duration-500",
-        ['preview', 'select'].includes(currentView) || !isNavVisible ? "translate-y-full opacity-0" : "translate-y-0 opacity-100"
+        ['preview', 'select'].includes(currentView) || (!isNavVisible && currentView !== 'map') ? "translate-y-full opacity-0" : "translate-y-0 opacity-100"
       )}>
         <NavItem active={currentView === 'dashboard'} onClick={() => handleNav('dashboard')} icon={<Home />} label="首頁" />
         <NavItem active={currentView === 'map'} onClick={() => handleNav('map')} icon={<MapIcon />} label="地圖" />
