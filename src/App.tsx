@@ -36,7 +36,7 @@ import {
 import { useAuth } from './lib/AuthContext';
 import { loginWithGoogle, auth, db, storage } from './lib/firebase';
 import { signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit, onSnapshot, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit, onSnapshot, deleteDoc, arrayUnion } from 'firebase/firestore';
 import { TRACK_DATA, LEVELS_EXP_REQ, TITLES, BADGES } from './constants';
 import { View, Track, Task, AppState } from './types';
 import { cn, calculateLevel } from './lib/utils';
@@ -98,9 +98,24 @@ export default function App() {
   const lastScrollY = React.useRef(0);
   const [isNavVisible, setIsNavVisible] = useState(true);
 
+  // Form states lifted to prevent unmounting resetting during scrolling
+  const [checkinText, setCheckinText] = useState('');
+  const [checkinSelectedFile, setCheckinSelectedFile] = useState<File | null>(null);
+  const [checkinPreviewUrl, setCheckinPreviewUrl] = useState<string | null>(null);
+  const [checkinIsUploading, setCheckinIsUploading] = useState(false);
+
+  // Feed Comments states
+  const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
+  const [commentInputText, setCommentInputText] = useState('');
+
+  // Profile reset state
+  const [isConfirmingReset, setIsConfirmingReset] = useState(false);
+
   useEffect(() => {
     setIsNavVisible(true);
     lastScrollY.current = 0;
+    // Reset active comment box on view switch
+    setActiveCommentPostId(null);
   }, [currentView]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -609,22 +624,18 @@ export default function App() {
     );
   };
 
-  const CheckinView = () => {
+  const renderCheckinView = () => {
     const track = state.track || 'veg';
     const data = TRACK_DATA[track];
     const task = data.tasks[Math.min(state.level - 1, 3)];
-    const [text, setText] = useState('');
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [isUploading, setIsUploading] = useState(false);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
-        setSelectedFile(file);
+        setCheckinSelectedFile(file);
         const reader = new FileReader();
         reader.onloadend = () => {
-          setPreviewUrl(reader.result as string);
+          setCheckinPreviewUrl(reader.result as string);
         };
         reader.readAsDataURL(file);
       }
@@ -632,9 +643,9 @@ export default function App() {
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
-      if (isUploading) return;
+      if (checkinIsUploading) return;
       
-      setIsUploading(true);
+      setCheckinIsUploading(true);
       
       try {
         const oldRankLv = currentLevel;
@@ -690,7 +701,7 @@ export default function App() {
 
         // 1. Upload image if exists (Bypass Firebase Storage using Base64)
         let imageUrl = '';
-        if (selectedFile) {
+        if (checkinSelectedFile) {
           try {
             console.log('Compressing image to Base64...');
             imageUrl = await new Promise<string>((resolve, reject) => {
@@ -727,7 +738,7 @@ export default function App() {
                 img.src = event.target?.result as string;
               };
               reader.onerror = reject;
-              reader.readAsDataURL(selectedFile);
+              reader.readAsDataURL(checkinSelectedFile);
             });
             console.log('Image compressed successfully.');
           } catch (uploadErr: any) {
@@ -745,7 +756,7 @@ export default function App() {
           userAvatar: track,
           track,
           level: state.level, // The level they just completed
-          text,
+          text: checkinText,
           imageUrl,
           timestamp: serverTimestamp(),
           expGained: amount + (mapUp ? 50 : 0),
@@ -764,6 +775,11 @@ export default function App() {
           unlockedBadges: newBadges,
           badgeUnlockDates: newBadgeUnlockDates
         });
+
+        // Reset checkin form state
+        setCheckinText('');
+        setCheckinSelectedFile(null);
+        setCheckinPreviewUrl(null);
 
         // 4. Trigger UI
         const nextRankLv = calculateLevel(newExp, LEVELS_EXP_REQ);
@@ -784,7 +800,7 @@ export default function App() {
         console.error('Checkin process failed:', err);
         alert('打卡過程發生錯誤：\n這通常是因為資料庫/圖片庫尚未開通「測試模式 (Test mode)」，請確認您已在 Firebase 開通 Firestore 與 Storage。');
       } finally {
-        setIsUploading(false);
+        setCheckinIsUploading(false);
       }
     };
 
@@ -814,8 +830,8 @@ export default function App() {
           <div className="mb-6">
             <label className="block text-sm font-black text-text-main mb-3">今天做了什麼？有什麼感受？</label>
             <textarea 
-              value={text}
-              onChange={(e) => setText(e.target.value)}
+              value={checkinText}
+              onChange={(e) => setCheckinText(e.target.value)}
               rows={4} 
               className="w-full bg-gray-line/50 border-2 border-transparent rounded-2xl p-4 text-sm focus:outline-none focus:border-green-main focus:bg-white transition-all resize-none shadow-inner-soft" 
               placeholder="例如：今天中午吃了一間很棒的素食餐廳！" 
@@ -836,9 +852,9 @@ export default function App() {
               htmlFor="photo-upload"
               className="w-full h-40 border-2 border-dashed border-gray-lock/40 bg-gray-line/30 rounded-3xl flex flex-col items-center justify-center text-gray-lock hover:bg-gray-line/50 transition-colors group cursor-pointer overflow-hidden relative"
             >
-              {previewUrl ? (
+              {checkinPreviewUrl ? (
                 <>
-                  <img src={previewUrl} className="w-full h-full object-cover" alt="Preview" />
+                  <img src={checkinPreviewUrl} className="w-full h-full object-cover" alt="Preview" />
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                     <Camera className="text-white w-8 h-8" />
                   </div>
@@ -855,13 +871,13 @@ export default function App() {
           <div className="mt-auto">
             <button 
               type="submit" 
-              disabled={isUploading}
+              disabled={checkinIsUploading}
               className={cn(
                 "w-full text-white font-black py-5 rounded-2xl btn-active shadow-float text-lg mb-8 transition-all flex items-center justify-center gap-2",
-                isUploading ? "bg-gray-lock cursor-not-allowed" : "bg-text-main"
+                checkinIsUploading ? "bg-gray-lock cursor-not-allowed" : "bg-text-main"
               )}
             >
-              {isUploading ? (
+              {checkinIsUploading ? (
                 <>
                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
                   上傳中...
@@ -874,7 +890,7 @@ export default function App() {
     );
   };
 
-  const FeedView = () => (
+  const renderFeedView = () => (
     <div className="flex flex-col min-h-full bg-gray-line/20">
       <div className="sticky top-0 z-20 px-6 py-6 bg-white/90 backdrop-blur-xl border-b border-gray-line/50 flex justify-between items-center">
         <h2 className="text-xl font-black text-text-main tracking-tight">探索動態</h2>
@@ -962,11 +978,84 @@ export default function App() {
                 <Heart className={cn("w-5 h-5 transition-colors", post.likes > 0 && "fill-red-500 text-red-500")} /> 
                 <span className="font-black text-xs">{post.likes || 0}</span>
               </button>
-              <button className="flex items-center gap-1.5 text-text-sub hover:text-text-main transition-colors">
+              <button 
+                onClick={() => {
+                  if (activeCommentPostId === post.id) {
+                    setActiveCommentPostId(null);
+                  } else {
+                    setActiveCommentPostId(post.id);
+                    setCommentInputText('');
+                  }
+                }}
+                className="flex items-center gap-1.5 text-text-sub hover:text-text-main transition-colors"
+              >
                 <MessageCircle className="w-5 h-5" />
-                <span className="font-black text-xs">留言</span>
+                <span className="font-black text-xs">留言 ({post.comments?.length || 0})</span>
               </button>
             </div>
+
+            {activeCommentPostId === post.id && (
+              <div className="mt-4 pt-4 border-t border-gray-line/30 space-y-3">
+                <div className="max-h-40 overflow-y-auto space-y-3 pr-1 hide-scrollbar">
+                  {(!post.comments || post.comments.length === 0) ? (
+                    <p className="text-[11px] text-gray-lock text-center py-2">還沒有留言，快來留下第一句溫暖的話吧！</p>
+                  ) : (
+                    post.comments.map((comment: any, cIdx: number) => (
+                      <div key={cIdx} className="flex gap-2 items-start text-xs bg-gray-line/10 p-3 rounded-2xl border border-gray-line/30">
+                        <img 
+                          src={`https://api.dicebear.com/7.x/notionists/svg?seed=${comment.userAvatar || 'anon'}&backgroundColor=transparent`} 
+                          className="w-7 h-7 rounded-full bg-gray-line shadow-inner shrink-0"
+                          alt="Avatar"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-center mb-0.5">
+                            <span className="font-black text-[11px] text-text-main truncate mr-2">{comment.userName}</span>
+                            <span className="text-[9px] text-text-sub/50 font-bold shrink-0">
+                              {comment.timestamp ? new Date(comment.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '剛剛'}
+                            </span>
+                          </div>
+                          <p className="text-text-sub font-medium text-[12px] leading-relaxed break-words">{comment.text}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <form 
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!commentInputText.trim()) return;
+                    try {
+                      const postRef = doc(db, 'checkins', post.id);
+                      await updateDoc(postRef, {
+                        comments: arrayUnion({
+                          userName: user?.displayName || '匿名探險家',
+                          userAvatar: state.track || 'anon',
+                          text: commentInputText.trim(),
+                          timestamp: Date.now()
+                        })
+                      });
+                      setCommentInputText('');
+                    } catch (err) {
+                      console.error('Failed to add comment:', err);
+                    }
+                  }} 
+                  className="flex gap-2 mt-3"
+                >
+                  <input 
+                    type="text" 
+                    value={commentInputText}
+                    onChange={(e) => setCommentInputText(e.target.value)}
+                    placeholder="寫下你的溫暖回饋..." 
+                    className="flex-1 bg-gray-line/40 border border-transparent rounded-2xl px-4 py-2.5 text-xs focus:outline-none focus:border-green-main focus:bg-white transition-all shadow-inner-soft"
+                    required
+                  />
+                  <button type="submit" className="bg-text-main text-white px-4 py-2.5 rounded-2xl text-xs font-black hover:bg-green-main hover:scale-95 transition-all shrink-0 btn-active shadow-sm">
+                    送出
+                  </button>
+                </form>
+              </div>
+            )}
           </motion.div>
         ))}
       </div>
@@ -1032,12 +1121,11 @@ export default function App() {
     );
   };
 
-  const ProfileView = () => {
+  const renderProfileView = () => {
     const lv = currentLevel;
     const expReq = LEVELS_EXP_REQ[Math.min(lv, 4)];
     const prevReq = LEVELS_EXP_REQ[lv-1];
     const progress = ((state.exp - prevReq) / (expReq - prevReq)) * 100;
-    const [isConfirmingReset, setIsConfirmingReset] = useState(false);
 
     return (
       <div className="flex flex-col min-h-full bg-white-main">
@@ -1244,9 +1332,9 @@ export default function App() {
           {currentView === 'select' && <SelectView />}
           {currentView === 'dashboard' && <DashboardView />}
           {currentView === 'map' && <MapView />}
-          {currentView === 'checkin' && <CheckinView />}
-          {currentView === 'feed' && <FeedView />}
-          {currentView === 'profile' && <ProfileView />}
+          {currentView === 'checkin' && renderCheckinView()}
+          {currentView === 'feed' && renderFeedView()}
+          {currentView === 'profile' && renderProfileView()}
           {currentView === 'admin' && <AdminView />}
         </motion.div>
       </AnimatePresence>
