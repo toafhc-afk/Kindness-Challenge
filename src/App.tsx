@@ -121,6 +121,50 @@ export default function App() {
   // Map interactive state
   const [selectedMapTaskIndex, setSelectedMapTaskIndex] = useState<number | null>(null);
 
+  const [spotlightCoords, setSpotlightCoords] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+
+  useEffect(() => {
+    if (tutorialStep === null) {
+      setSpotlightCoords(null);
+      return;
+    }
+    
+    let targetId = '';
+    if (tutorialStep === 1) targetId = 'tutorial-step1-card';
+    else if (tutorialStep === 2) targetId = 'tutorial-step2-btn';
+    else if (tutorialStep === 3) targetId = 'tutorial-map-node-0';
+    else if (tutorialStep === 4) targetId = 'tutorial-step4-btn';
+    else if (tutorialStep === 5) targetId = 'tutorial-step5-checklist';
+
+    const updateCoords = () => {
+      const element = document.getElementById(targetId);
+      const container = document.getElementById('app-container');
+      if (element && container) {
+        const rect = element.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        setSpotlightCoords({
+          top: rect.top - containerRect.top,
+          left: rect.left - containerRect.left,
+          width: rect.width,
+          height: rect.height
+        });
+      } else {
+        setSpotlightCoords(null);
+      }
+    };
+
+    updateCoords();
+    const timer = setTimeout(updateCoords, 100);
+    const timer2 = setTimeout(updateCoords, 500);
+
+    window.addEventListener('resize', updateCoords);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(timer2);
+      window.removeEventListener('resize', updateCoords);
+    };
+  }, [tutorialStep, currentView, selectedMapTaskIndex]);
+
   useEffect(() => {
     setIsNavVisible(true);
     lastScrollY.current = 0;
@@ -596,7 +640,7 @@ export default function App() {
           </div>
 
           {/* Level Card */}
-          <div className="bg-white rounded-3xl p-5 shadow-float mb-8 border border-white">
+          <div id="tutorial-step1-card" className="bg-white rounded-3xl p-5 shadow-float mb-8 border border-white">
             <div className="flex justify-between items-end mb-3">
               <div className="flex items-center gap-2">
                 <div className="text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider" style={{ backgroundColor: tc }}>
@@ -686,7 +730,13 @@ export default function App() {
                 {currentTaskData.desc}
               </p>
               <button 
-                onClick={() => handleNav('map')} 
+                id="tutorial-step2-btn"
+                onClick={() => {
+                  handleNav('map');
+                  if (tutorialStep === 2) {
+                    setTutorialStep(3);
+                  }
+                }} 
                 className="w-full bg-text-main text-white font-black py-4 rounded-2xl text-sm btn-active flex items-center justify-center gap-2"
               >
                 前往挑戰地圖 <ChevronRight className="w-4 h-4" />
@@ -740,9 +790,11 @@ export default function App() {
           {tasks.slice().reverse().map((task, reverseIdx) => {
             const idx = 3 - reverseIdx;
             const status = idx + 1 < state.level ? 'done' : idx + 1 === state.level ? 'active' : 'locked';
+            const isLevel1Node = idx === 0;
             return (
               <motion.div 
                 key={task.id}
+                id={isLevel1Node ? 'tutorial-map-node-0' : undefined}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
@@ -752,6 +804,9 @@ export default function App() {
                 )}
                 onClick={() => {
                   setSelectedMapTaskIndex(idx);
+                  if (tutorialStep === 3 && isLevel1Node) {
+                    setTutorialStep(4);
+                  }
                 }}
               >
                 <div className={cn(
@@ -859,9 +914,13 @@ export default function App() {
 
                 {selectedMapTaskIndex + 1 === state.level ? (
                   <button 
+                    id="tutorial-step4-btn"
                     onClick={() => {
                       setSelectedMapTaskIndex(null);
                       handleNav('checkin');
+                      if (tutorialStep === 4) {
+                        setTutorialStep(5);
+                      }
                     }} 
                     className="w-full text-white font-black py-4 rounded-2xl text-sm btn-active shadow-lg flex items-center justify-center gap-2 hover:scale-[0.98] transition-transform"
                     style={{ backgroundColor: tc, boxShadow: `0 10px 15px -3px ${tc}33` }}
@@ -1030,7 +1089,7 @@ export default function App() {
 
         // 3. Update User State
         console.log('Updating user state...');
-        await updateFirebaseState({
+        const updates: Partial<AppState> = {
           exp: newExp,
           level: newLevel,
           checkInCount: totalChecks,
@@ -1039,7 +1098,12 @@ export default function App() {
           lastCheckInDate: today,
           unlockedBadges: newBadges,
           badgeUnlockDates: newBadgeUnlockDates
-        });
+        };
+        if (tutorialStep === 5) {
+          updates.hasCompletedTutorial = true;
+          setTutorialStep(null);
+        }
+        await updateFirebaseState(updates);
 
         // Reset checkin form state
         setCheckinText('');
@@ -1147,7 +1211,7 @@ export default function App() {
 
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
           {task.checklist && task.checklist.length > 0 && (
-            <div className="mb-6 bg-white border border-gray-line p-5 rounded-3xl shadow-soft">
+            <div id="tutorial-step5-checklist" className="mb-6 bg-white border border-gray-line p-5 rounded-3xl shadow-soft">
               <label className="block text-xs font-black text-text-sub uppercase tracking-wider mb-3">
                 📋 關卡實踐項目（請勾選至少一項）
               </label>
@@ -2009,150 +2073,172 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* 3. Reward Modal */}
-      <AnimatePresence>
-        {showRewardModal && (
-          <div className="absolute inset-0 z-[120] flex items-center justify-center p-6">
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-text-main/80 backdrop-blur-md"
-              onClick={() => setShowRewardModal(null)}
-            />
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 30 }}
-              className="bg-[#FAFFFD] rounded-[40px] p-8 w-full max-w-sm relative overflow-hidden shadow-2xl border-4 border-white"
-            >
-              <button onClick={() => setShowRewardModal(null)} className="absolute top-6 right-6 text-gray-lock hover:text-text-main transition-colors z-20">
-                <X className="w-6 h-6" />
-              </button>
-
-              <div className="text-center relative z-10 mb-8 mt-2">
-                <div className="w-20 h-20 mx-auto rounded-[24px] bg-green-light flex items-center justify-center text-4xl mb-5 shadow-inner rotate-3">
-                  <Gift className="w-10 h-10 text-green-main" />
-                </div>
-                <h2 className="text-2xl font-black text-text-main mb-2 tracking-tight">專屬完成紀念</h2>
-                <p className="text-xs text-text-sub font-medium leading-relaxed">
-                  你已完成這段友善旅程，<br/>為您準備了一份小小的心意。
-                </p>
-              </div>
-
-              <div className="space-y-3 relative z-10">
-                {BADGES.find(b => b.track === showRewardModal && b.type === 'completeBadge')?.reward?.map((rwd, idx) => (
-                  <button 
-                    key={idx}
-                    className="w-full bg-white border border-gray-line/50 p-4 rounded-2xl flex items-center gap-4 hover:border-green-main/50 hover:shadow-soft transition-all group text-left btn-active"
-                    onClick={() => alert('準備下載：' + rwd + '\n(此功能為示意，正式版將提供檔案下載)')}
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-gray-line/30 flex items-center justify-center group-hover:bg-green-light transition-colors shrink-0">
-                      {idx === 0 ? <Award className="w-5 h-5 text-text-main group-hover:text-green-main" /> : <Download className="w-5 h-5 text-text-main group-hover:text-green-main" />}
-                    </div>
-                    <span className="text-[13px] font-black text-text-main flex-1 group-hover:text-green-main transition-colors leading-tight">{rwd}</span>
-                  </button>
-                ))}
-              </div>
-
-              <button 
-                onClick={() => {
-                  setShowRewardModal(null);
-                  setCurrentView('profile');
-                }}
-                className="w-full mt-8 bg-text-main text-white font-black py-4 rounded-2xl btn-active shadow-float tracking-widest uppercase text-sm"
-              >
-                回到徽章牆
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
       {/* Interactive Onboarding Tutorial Overlay */}
       <AnimatePresence>
         {tutorialStep !== null && (
-          <div className="absolute inset-0 bg-black/65 backdrop-blur-[2px] z-[150] flex flex-col justify-end p-6 select-none">
-            {/* Spotlight and tooltip container */}
-            <div className="flex-1 flex flex-col justify-center items-center">
-              {tutorialStep === 1 && (
+          <div className="absolute inset-0 z-[140] select-none pointer-events-none">
+            {spotlightCoords ? (
+              <>
+                {/* 4 Blocker segments for the spotlight effect */}
+                <div 
+                  className="absolute left-0 right-0 top-0 bg-black/65 pointer-events-auto transition-all duration-300"
+                  style={{ height: spotlightCoords.top }}
+                />
+                <div 
+                  className="absolute left-0 right-0 bottom-0 bg-black/65 pointer-events-auto transition-all duration-300"
+                  style={{ top: spotlightCoords.top + spotlightCoords.height }}
+                />
+                <div 
+                  className="absolute left-0 bg-black/65 pointer-events-auto transition-all duration-300"
+                  style={{ 
+                    top: spotlightCoords.top, 
+                    height: spotlightCoords.height, 
+                    width: spotlightCoords.left 
+                  }}
+                />
+                <div 
+                  className="absolute right-0 bg-black/65 pointer-events-auto transition-all duration-300"
+                  style={{ 
+                    top: spotlightCoords.top, 
+                    height: spotlightCoords.height, 
+                    left: spotlightCoords.left + spotlightCoords.width 
+                  }}
+                />
+
+                {/* Highlight Frame */}
+                <div 
+                  className="absolute border-[3px] border-white rounded-[24px] pointer-events-none shadow-[0_0_15px_rgba(255,255,255,0.8)] transition-all duration-300 animate-pulse"
+                  style={{
+                    top: spotlightCoords.top - 4,
+                    left: spotlightCoords.left - 4,
+                    width: spotlightCoords.width + 8,
+                    height: spotlightCoords.height + 8,
+                  }}
+                />
+
+                {/* Popover Tooltip Dialog Card */}
                 <motion.div 
-                  initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.9, opacity: 0, y: -20 }}
-                  className="bg-white rounded-[36px] p-7 shadow-2xl border-4 border-green-main/30 max-w-xs text-center relative"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="absolute w-[290px] pointer-events-auto z-[145]"
+                  style={{
+                    left: Math.max(16, Math.min(400 - 306, spotlightCoords.left + (spotlightCoords.width - 290) / 2)),
+                    top: spotlightCoords.top > 280 
+                      ? spotlightCoords.top - 180 // Above
+                      : spotlightCoords.top + spotlightCoords.height + 16 // Below
+                  }}
                 >
-                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-float rotate-6">🏆</div>
-                  <h4 className="font-black text-text-main text-lg mb-2.5 mt-2">1. 全局等級系統</h4>
-                  <p className="text-[12px] text-text-sub font-semibold leading-relaxed mb-5">
-                    不論你挑戰蔬食、減塑或雙軌，獲得的經驗值（EXP）都會累積在這裡！只要將各個軌道都挑戰成功，累積足夠的 EXP，就能解鎖最高榮譽【永續守護神】！
-                  </p>
-                  <div className="w-full h-1.5 bg-gray-line rounded-full overflow-hidden mb-6">
-                    <div className="w-1/3 h-full bg-green-main" />
+                  <div className="bg-white rounded-[32px] p-5.5 shadow-2xl border-4 border-white text-center relative">
+                    {/* Tiny arrow pointing to the spotlight */}
+                    <div 
+                      className={cn(
+                        "absolute left-1/2 -translate-x-1/2 w-4 h-4 bg-white rotate-45 border-t border-l border-white/50",
+                        spotlightCoords.top > 280 ? "-bottom-2 border-t-0 border-l-0 border-b border-r" : "-top-2"
+                      )}
+                    />
+
+                    {tutorialStep === 1 && (
+                      <div>
+                        <div className="text-2xl mb-2">🏆</div>
+                        <h4 className="font-black text-text-main text-sm mb-1.5">1. 升級與稱號系統</h4>
+                        <p className="text-[11px] text-text-sub font-semibold leading-relaxed mb-4">
+                          不管你挑戰哪條路線，累積的經驗值都算在這裡！升級可以提升等級與解鎖精美徽章稱號！
+                        </p>
+                        <button 
+                          onClick={() => setTutorialStep(2)}
+                          className="w-full bg-text-main text-white font-black py-3 rounded-xl text-xs btn-active flex items-center justify-center gap-1 shadow-md"
+                        >
+                          知道了，下一步 <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
+                    {tutorialStep === 2 && (
+                      <div>
+                        <div className="text-2xl mb-2">🗺️</div>
+                        <h4 className="font-black text-text-main text-sm mb-1.5">2. 展開關卡挑戰</h4>
+                        <p className="text-[11px] text-text-sub font-semibold leading-relaxed mb-3">
+                          點擊閃爍的 **「前往挑戰地圖」** 按鈕，查看你當前軌道的所有關卡！
+                        </p>
+                        <div className="text-[10px] text-[#FF9F1C] font-black animate-bounce mt-1">
+                          👆 請直接點擊下方發光的按鈕繼續
+                        </div>
+                      </div>
+                    )}
+
+                    {tutorialStep === 3 && (
+                      <div>
+                        <div className="text-2xl mb-2">📍</div>
+                        <h4 className="font-black text-text-main text-sm mb-1.5">3. 點選挑戰關卡</h4>
+                        <p className="text-[11px] text-text-sub font-semibold leading-relaxed mb-3">
+                          歡迎來到永續地圖！**請點擊關卡一**，打開它的任務說明。
+                        </p>
+                        <div className="text-[10px] text-[#FF9F1C] font-black animate-bounce mt-1">
+                          👆 請直接點擊下方發光的關卡點繼續
+                        </div>
+                      </div>
+                    )}
+
+                    {tutorialStep === 4 && (
+                      <div>
+                        <div className="text-2xl mb-2">📸</div>
+                        <h4 className="font-black text-text-main text-sm mb-1.5">4. 開始打卡行動</h4>
+                        <p className="text-[11px] text-text-sub font-semibold leading-relaxed mb-3">
+                          在這裡閱讀任務指南。請點選 **「立即打卡行動」** 按鈕進入打卡！
+                        </p>
+                        <div className="text-[10px] text-[#FF9F1C] font-black animate-bounce mt-1">
+                          👆 請點選下方發光的按鈕繼續
+                        </div>
+                      </div>
+                    )}
+
+                    {tutorialStep === 5 && (
+                      <div>
+                        <div className="text-2xl mb-2">📋</div>
+                        <h4 className="font-black text-text-main text-sm mb-1.5">5. 勾選與送出</h4>
+                        <p className="text-[11px] text-text-sub font-semibold leading-relaxed mb-4">
+                          勾選你實踐的環保項目並填寫心得。完成後**送出打卡**，即可賺取 EXP 並完成教學！
+                        </p>
+                        <div className="text-[10px] text-[#FF9F1C] font-black animate-bounce mb-3">
+                          👆 請先勾選項目並按下方的送出打卡
+                        </div>
+                        <button 
+                          onClick={async () => {
+                            setTutorialStep(null);
+                            await updateFirebaseState({ hasCompletedTutorial: true });
+                          }}
+                          className="w-full py-2.5 rounded-xl border border-gray-line text-xs text-text-sub font-black hover:bg-gray-50 transition-colors btn-active"
+                        >
+                          直接結束教學 ⏭️
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <button 
-                    onClick={() => setTutorialStep(2)} 
-                    className="w-full bg-text-main text-white font-black py-4 rounded-2xl text-xs btn-active flex items-center justify-center gap-1.5 shadow-md"
-                  >
-                    下一步 <ChevronRight className="w-4 h-4" />
-                  </button>
-                </motion.div>
-              )}
 
-              {tutorialStep === 2 && (
-                <motion.div 
-                  initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.9, opacity: 0, y: -20 }}
-                  className="bg-white rounded-[36px] p-7 shadow-2xl border-4 border-blue-main/30 max-w-xs text-center relative"
-                >
-                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-float -rotate-6">🎯</div>
-                  <h4 className="font-black text-text-main text-lg mb-2.5 mt-2">2. 首頁主線任務</h4>
-                  <p className="text-[12px] text-text-sub font-semibold leading-relaxed mb-6">
-                    首頁會顯示你當前的挑戰關卡。點擊「前往挑戰地圖」即可查看你的探險地圖，展開每天的綠色打卡！
-                  </p>
-                  <button 
-                    onClick={() => setTutorialStep(3)} 
-                    className="w-full bg-text-main text-white font-black py-4 rounded-2xl text-xs btn-active flex items-center justify-center gap-1.5 shadow-md"
-                  >
-                    下一步 <ChevronRight className="w-4 h-4" />
-                  </button>
+                  {/* Skip Tutorial text button */}
+                  {tutorialStep !== 5 && (
+                    <div className="text-center mt-4">
+                      <button 
+                        onClick={async () => {
+                          setTutorialStep(null);
+                          await updateFirebaseState({ hasCompletedTutorial: true });
+                        }}
+                        className="text-white/70 hover:text-white font-black text-[11px] underline underline-offset-4 tracking-widest uppercase transition-colors"
+                      >
+                        跳過新手教學 Skip
+                      </button>
+                    </div>
+                  )}
                 </motion.div>
-              )}
-
-              {tutorialStep === 3 && (
-                <motion.div 
-                  initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.9, opacity: 0, y: -20 }}
-                  className="bg-white rounded-[36px] p-7 shadow-2xl border-4 border-[#FF9F1C]/30 max-w-xs text-center relative"
-                >
-                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-float rotate-12">🗺️</div>
-                  <h4 className="font-black text-text-main text-lg mb-2.5 mt-2">3. 隨時切換挑戰軌道</h4>
-                  <p className="text-[12px] text-text-sub font-semibold leading-relaxed mb-6">
-                    你可以隨時前往「我的」個人頁面，點擊「切換挑戰軌道」來嘗試別的路線。你已解鎖的徽章進度與總 EXP 都會被完美保留喔！
-                  </p>
-                  <button 
-                    onClick={async () => {
-                      setTutorialStep(null);
-                      await updateFirebaseState({ hasCompletedTutorial: true });
-                    }} 
-                    className="w-full bg-green-main text-white font-black py-4 rounded-2xl text-xs btn-active flex items-center justify-center gap-1 shadow-md shadow-green-200"
-                  >
-                    太棒了，開始挑戰！ 🎉
-                  </button>
-                </motion.div>
-              )}
-            </div>
-
-            {/* Skip button at the very bottom */}
-            <div className="flex justify-center pb-8">
-              <button 
-                onClick={async () => {
-                  setTutorialStep(null);
-                  await updateFirebaseState({ hasCompletedTutorial: true });
-                }} 
-                className="text-white/60 hover:text-white font-black text-xs underline underline-offset-4 tracking-widest uppercase transition-colors"
-              >
-                跳過教學 Skip Tutorial
-              </button>
-            </div>
+              </>
+            ) : (
+              // Initial fallback when spotlight coordinates are loading
+              <div className="absolute inset-0 bg-black/65 pointer-events-auto flex items-center justify-center">
+                <div className="text-center text-white/80 text-sm font-black animate-pulse">
+                  載入導覽指引中...
+                </div>
+              </div>
+            )}
           </div>
         )}
       </AnimatePresence>
