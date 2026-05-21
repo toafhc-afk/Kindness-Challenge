@@ -195,6 +195,8 @@ export default function App() {
   useEffect(() => {
     if (firebaseState) {
       setLocalState(firebaseState);
+    } else {
+      setLocalState(null);
     }
   }, [firebaseState]);
 
@@ -202,7 +204,9 @@ export default function App() {
   useEffect(() => {
     if (!authLoading && user) {
       const stateToUse = localState || firebaseState;
-      if (stateToUse) {
+      if (!stateToUse) {
+        setCurrentView('select');
+      } else {
         if (!stateToUse.hasSeenPreview) {
           updateFirebaseState({ hasSeenPreview: true });
           setCurrentView('select');
