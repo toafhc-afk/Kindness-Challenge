@@ -34,8 +34,8 @@ import {
   Download
 } from 'lucide-react';
 import { useAuth } from './lib/AuthContext';
-import { loginWithGoogle, auth, db, storage } from './lib/firebase';
-import { signOut } from 'firebase/auth';
+import { loginWithGoogle, loginAnonymously, googleProvider, auth, db, storage } from './lib/firebase';
+import { signOut, linkWithPopup } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit, onSnapshot, deleteDoc, arrayUnion } from 'firebase/firestore';
 import { TRACK_DATA, LEVELS_EXP_REQ, TITLES, TITLES_BY_TRACK, BADGES } from './constants';
 import { View, Track, Task, AppState, Badge } from './types';
@@ -317,7 +317,7 @@ export default function App() {
     return (
       <div id="app-container" className="max-w-[400px] mx-auto bg-white-main h-svh relative overflow-hidden flex flex-col shadow-2xl items-center justify-center p-12 text-center">
         <div className="w-32 h-32 bg-green-light rounded-full flex items-center justify-center text-6xl mb-8 pulse-glow">🌱</div>
-        <h1 className="text-3xl font-black text-text-main mb-4 tracking-tighter">開始你的<br/>慈心大挑戰</h1>
+        <h1 className="text-3xl font-black text-text-main mb-4 tracking-tighter">開始你的<br/>永續大挑戰</h1>
         <p className="text-sm text-text-sub mb-10 leading-relaxed font-medium">
           連結你的 Google 帳號，<br/>記錄你的環保足跡與夥伴交流！
         </p>
@@ -327,6 +327,24 @@ export default function App() {
         >
           <LogIn className="w-6 h-6" /> 使用 Google 登入
         </button>
+
+        <button 
+          onClick={async () => {
+            const proceed = confirm(
+              "💡 溫馨提醒：\n「免登入」可以立即開始體驗，但清除瀏覽器暫存、開啟私密（無痕）瀏覽或更換手機時，進度將會遺失喔！\n\n確定要以訪客身分開始玩嗎？"
+            );
+            if (!proceed) return;
+            try {
+              await loginAnonymously();
+            } catch (err) {
+              alert("免登入失敗，請嘗試使用 Google 登入。");
+            }
+          }}
+          className="w-full mt-4 bg-white border-2 border-gray-line text-text-sub font-black py-4.5 rounded-2xl btn-active flex items-center justify-center gap-2 text-base shadow-sm hover:border-text-main hover:text-text-main transition-all"
+        >
+          ✨ 免登入訪客體驗 (資料易遺失)
+        </button>
+
         <p className="mt-8 text-[10px] text-gray-lock uppercase tracking-widest font-black">
           Join the mission for a better world
         </p>
@@ -338,7 +356,7 @@ export default function App() {
 
   const renderPreviewView = () => (
     <div className="px-6 py-8">
-      <h1 className="text-2xl font-black text-text-main text-center mb-2 tracking-tight">慈心大挑戰</h1>
+      <h1 className="text-2xl font-black text-text-main text-center mb-2 tracking-tight">永續大挑戰</h1>
       <p className="text-xs text-text-sub text-center mb-6 font-bold leading-relaxed px-4">
         在這裡，你可以預覽每個軌道完整的 4 個階段挑戰。<br/>
         選定適合你的路線後，即可點選下方開始挑戰！
@@ -416,7 +434,7 @@ export default function App() {
   const renderSelectView = () => (
     <div className="px-6 py-8">
       <h1 className="text-2xl font-black text-text-main mb-2">選擇你的挑戰軌道</h1>
-      <p className="text-sm text-text-sub mb-8 font-medium">選擇適合你的路線，開啟你的慈心旅程！</p>
+      <p className="text-sm text-text-sub mb-8 font-medium">選擇適合你的路線，開啟你的永續旅程！</p>
 
       <div className="space-y-4 mb-8">
         {(['veg', 'plastic', 'dual'] as Track[]).map((t) => {
@@ -1562,6 +1580,38 @@ export default function App() {
 
     return (
       <div className="flex flex-col min-h-full bg-white-main">
+        {user?.isAnonymous && (
+          <div className="bg-[#FF9F1C] text-white px-6 py-4 flex flex-col gap-2.5 items-center justify-between text-center shadow-md">
+            <p className="text-[12px] font-black leading-relaxed flex items-center gap-1.5 justify-center">
+              ⚠️ 您目前使用「免登入訪客模式」，進度隨時可能因清除快取而遺失！
+            </p>
+            <button 
+              onClick={async () => {
+                const confirmLink = confirm(
+                  "📦 連結 Google 帳號備份進度：\n我們將引導您登入 Google 帳號，並將您當前累積的等級、EXP、徽章進度永久同步到該帳號中，確保資料不會遺失！\n\n是否現在進行連結？"
+                );
+                if (!confirmLink) return;
+                try {
+                  const provider = googleProvider;
+                  const credentialResult = await linkWithPopup(user, provider);
+                  alert("🎉 帳號連結成功！您的進度已安全備份至 Google 帳號。");
+                  await refreshUserState();
+                } catch (linkErr: any) {
+                  console.error("Linking failed:", linkErr);
+                  if (linkErr.code === 'auth/credential-already-in-use') {
+                    alert("❌ 備份失敗：此 Google 帳號已經註冊過其他挑戰進度了。請使用尚未註冊過本遊戲的 Google 帳號進行綁定！");
+                  } else {
+                    alert("❌ 連結失敗，請稍後再試。");
+                  }
+                }
+              }}
+              className="bg-white text-[#FF9F1C] text-xs font-black px-4 py-2 rounded-xl shadow-soft btn-active hover:scale-105 transition-transform"
+            >
+              🔗 立即連結 Google 帳號備份
+            </button>
+          </div>
+        )}
+
         <div className="bg-white rounded-b-[48px] shadow-soft px-8 py-12 mb-8 border-b border-gray-line/50">
           <div className="flex items-center gap-6 mb-10">
             <div className="w-24 h-24 rounded-full border-[6px] border-white shadow-float overflow-hidden shrink-0" style={{ backgroundColor: tl }}>
@@ -1572,7 +1622,9 @@ export default function App() {
               />
             </div>
             <div>
-              <h2 className="text-24pt font-black text-text-main tracking-tight leading-tight">{user?.displayName || '探險家'}</h2>
+              <h2 className="text-24pt font-black text-text-main tracking-tight leading-tight">
+                {user?.isAnonymous ? '訪客探險家' : (user?.displayName || '匿名探險家')}
+              </h2>
               <div className="flex items-center gap-3 mt-3">
                 <span className="text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest" style={{ backgroundColor: tc }}>
                   Lv.{lv}
@@ -1926,7 +1978,7 @@ export default function App() {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="shrink-0 text-sm">🗺️</span>
-                        <span>現在可前往<strong className="text-green-main">「地圖」</strong>點選下一關，解鎖並挑戰新的慈心任務！</span>
+                        <span>現在可前往<strong className="text-green-main">「地圖」</strong>點選下一關，解鎖並挑戰新的永續任務！</span>
                       </li>
                     </ul>
                   </div>
