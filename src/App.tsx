@@ -252,6 +252,7 @@ export default function App() {
     badgeUnlockDates: {},
     claimedRewards: [],
     lastCheckInDate: null,
+    hasCompletedTutorial: false,
   };
 
   const state = { ...defaultState, ...(localState || firebaseState || {}) };
@@ -1800,7 +1801,8 @@ export default function App() {
                       co2Saved: 0,
                       unlockedBadges: ['novice'],
                       lastCheckInDate: null,
-                      hasSeenPreview: false
+                      hasSeenPreview: false,
+                      hasCompletedTutorial: false,
                     });
                     setCurrentView('preview');
                   }}
