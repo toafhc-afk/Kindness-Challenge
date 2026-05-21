@@ -84,7 +84,7 @@ export default function App() {
   // Local state for UI responsiveness, initialized from Firebase if available
   const [localState, setLocalState] = useState<AppState | null>(null);
   
-  const [currentView, setCurrentView] = useState<View>('preview');
+  const [currentView, setCurrentView] = useState<View>('dashboard');
   const [tempTrack, setTempTrack] = useState<Track | null>(null);
   const [previewTab, setPreviewTab] = useState<'veg' | 'plastic'>('veg');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -116,54 +116,12 @@ export default function App() {
 
   // Profile reset state
   const [isConfirmingReset, setIsConfirmingReset] = useState(false);
-  const [tutorialStep, setTutorialStep] = useState<number | null>(null);
+  const [showTutorialModal, setShowTutorialModal] = useState(false);
+  const [tutorialSlide, setTutorialSlide] = useState(0);
+  const [profileTab, setProfileTab] = useState<'badges' | 'settings'>('badges');
 
   // Map interactive state
   const [selectedMapTaskIndex, setSelectedMapTaskIndex] = useState<number | null>(null);
-
-  const [spotlightCoords, setSpotlightCoords] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
-
-  useEffect(() => {
-    if (tutorialStep === null) {
-      setSpotlightCoords(null);
-      return;
-    }
-    
-    let targetId = '';
-    if (tutorialStep === 1) targetId = 'tutorial-step1-card';
-    else if (tutorialStep === 2) targetId = 'tutorial-step2-btn';
-    else if (tutorialStep === 3) targetId = 'tutorial-map-node-0';
-    else if (tutorialStep === 4) targetId = 'tutorial-step4-btn';
-    else if (tutorialStep === 5) targetId = 'tutorial-step5-checklist';
-
-    const updateCoords = () => {
-      const element = document.getElementById(targetId);
-      const container = document.getElementById('app-container');
-      if (element && container) {
-        const rect = element.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-        setSpotlightCoords({
-          top: rect.top - containerRect.top,
-          left: rect.left - containerRect.left,
-          width: rect.width,
-          height: rect.height
-        });
-      } else {
-        setSpotlightCoords(null);
-      }
-    };
-
-    updateCoords();
-    const timer = setTimeout(updateCoords, 100);
-    const timer2 = setTimeout(updateCoords, 500);
-
-    window.addEventListener('resize', updateCoords);
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(timer2);
-      window.removeEventListener('resize', updateCoords);
-    };
-  }, [tutorialStep, currentView, selectedMapTaskIndex]);
 
   useEffect(() => {
     setIsNavVisible(true);
@@ -257,13 +215,14 @@ export default function App() {
     }
   }, [authLoading, user, firebaseState]);
 
-  // Trigger tutorial if not completed yet
+  // Trigger tutorial modal if not completed yet
   useEffect(() => {
     const stateToUse = localState || firebaseState;
-    if (user && stateToUse && stateToUse.track && !stateToUse.hasCompletedTutorial && currentView === 'dashboard' && tutorialStep === null) {
-      setTutorialStep(1);
+    if (user && stateToUse && stateToUse.track && !stateToUse.hasCompletedTutorial && !showTutorialModal && currentView === 'dashboard') {
+      setShowTutorialModal(true);
+      setTutorialSlide(0);
     }
-  }, [user, localState, firebaseState, currentView, tutorialStep]);
+  }, [user, localState, firebaseState, currentView, showTutorialModal]);
 
   // Load feed from Firestore
   useEffect(() => {
@@ -630,6 +589,15 @@ export default function App() {
                 你好，探險家 <motion.span animate={{ rotate: [0, 20, 0] }} transition={{ repeat: Infinity, duration: 2 }}>👋</motion.span>
               </h2>
               <p className="text-sm text-text-sub font-medium opacity-80">一起讓世界變得更好！</p>
+              <button 
+                onClick={() => {
+                  setTutorialSlide(0);
+                  setShowTutorialModal(true);
+                }}
+                className="mt-2.5 bg-white/85 hover:bg-white text-text-main font-black px-3 py-1.5 rounded-full text-[10px] shadow-sm border border-gray-line/50 flex items-center gap-1 btn-active transition-all"
+              >
+                <span>💡 玩法教學</span>
+              </button>
             </div>
             <motion.div 
               whileHover={{ scale: 1.05 }}
@@ -731,12 +699,8 @@ export default function App() {
                 {currentTaskData.desc}
               </p>
               <button 
-                id="tutorial-step2-btn"
                 onClick={() => {
                   handleNav('map');
-                  if (tutorialStep === 2) {
-                    setTutorialStep(3);
-                  }
                 }} 
                 className="w-full bg-text-main text-white font-black py-4 rounded-2xl text-sm btn-active flex items-center justify-center gap-2"
               >
@@ -795,7 +759,6 @@ export default function App() {
             return (
               <motion.div 
                 key={task.id}
-                id={isLevel1Node ? 'tutorial-map-node-0' : undefined}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
@@ -805,9 +768,6 @@ export default function App() {
                 )}
                 onClick={() => {
                   setSelectedMapTaskIndex(idx);
-                  if (tutorialStep === 3 && isLevel1Node) {
-                    setTutorialStep(4);
-                  }
                 }}
               >
                 <div className={cn(
@@ -915,13 +875,9 @@ export default function App() {
 
                 {selectedMapTaskIndex + 1 === state.level ? (
                   <button 
-                    id="tutorial-step4-btn"
                     onClick={() => {
                       setSelectedMapTaskIndex(null);
                       handleNav('checkin');
-                      if (tutorialStep === 4) {
-                        setTutorialStep(5);
-                      }
                     }} 
                     className="w-full text-white font-black py-4 rounded-2xl text-sm btn-active shadow-lg flex items-center justify-center gap-2 hover:scale-[0.98] transition-transform"
                     style={{ backgroundColor: tc, boxShadow: `0 10px 15px -3px ${tc}33` }}
@@ -1100,10 +1056,6 @@ export default function App() {
           unlockedBadges: newBadges,
           badgeUnlockDates: newBadgeUnlockDates
         };
-        if (tutorialStep === 5) {
-          updates.hasCompletedTutorial = true;
-          setTutorialStep(null);
-        }
         await updateFirebaseState(updates);
 
         // Reset checkin form state
@@ -1718,167 +1670,202 @@ export default function App() {
           </div>
         </div>
 
-        <div className="px-8 flex-1">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="font-black text-lg text-text-main tracking-tight">徽章收藏庫</h3>
-            <div className="text-[10px] font-black text-text-sub uppercase tracking-[0.2em]">
-              {state.unlockedBadges.length} / {BADGES.length}
-            </div>
+        {/* Tab Selection */}
+        <div className="px-8 mb-6">
+          <div className="flex bg-gray-line rounded-2xl p-1">
+            <button 
+              onClick={() => setProfileTab('badges')}
+              className={cn(
+                "flex-1 py-3 text-xs font-black rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5",
+                profileTab === 'badges' ? "bg-white text-text-main shadow-sm" : "text-text-sub"
+              )}
+            >
+              🏆 我的徽章庫
+            </button>
+            <button 
+              onClick={() => setProfileTab('settings')}
+              className={cn(
+                "flex-1 py-3 text-xs font-black rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5",
+                profileTab === 'settings' ? "bg-white text-text-main shadow-sm" : "text-text-sub"
+              )}
+            >
+              ⚙️ 帳號與設定
+            </button>
           </div>
+        </div>
 
-          {[
-            { id: 'veg', name: '蔬食行動', color: 'from-[#E8F5D8] to-[#9FD356]', border: 'border-[#9FD356]' },
-            { id: 'plastic', name: '淨塑行動', color: 'from-[#E1EEFA] to-[#3C91E6]', border: 'border-[#3C91E6]' },
-            { id: 'dual', name: '雙軌挑戰', color: 'from-[#FFF0E5] to-[#FF9F1C]', border: 'border-[#FF9F1C]' }
-          ].sort((a, b) => {
-            if (a.id === state.track) return -1;
-            if (b.id === state.track) return 1;
-            return 0;
-          }).map(trackInfo => (
-            <div key={trackInfo.id} className="mb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-[1px] flex-1 bg-gray-line/50"></div>
-                <span className="text-xs font-black text-text-main tracking-widest">{trackInfo.name}</span>
-                <div className="h-[1px] flex-1 bg-gray-line/50"></div>
+        {profileTab === 'badges' ? (
+          <div className="px-8 flex-1">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="font-black text-lg text-text-main tracking-tight">徽章收藏庫</h3>
+              <div className="text-[10px] font-black text-text-sub uppercase tracking-[0.2em]">
+                {state.unlockedBadges.length} / {BADGES.length}
               </div>
-              
-              <div className="grid grid-cols-4 gap-y-6 gap-x-2 mb-6">
-                {BADGES.filter(b => b.track === trackInfo.id && b.type === 'levelBadge').map(badge => {
-                  const isUnlocked = state.unlockedBadges.includes(badge.id);
-                  return (
-                    <motion.div 
-                      key={badge.id}
-                      onClick={() => setSelectedBadge(badge)}
-                      whileHover={isUnlocked ? { y: -2 } : {}}
-                      className="flex flex-col items-center text-center group cursor-pointer"
-                    >
-                      <div className={cn(
-                        "w-14 h-14 rounded-full mb-2 flex items-center justify-center text-xl transition-all duration-500",
-                        isUnlocked ? `bg-gradient-to-br ${trackInfo.color} shadow-float border-2 ${trackInfo.border}` : "bg-gray-line/50 text-gray-lock filter grayscale opacity-40 scale-90 border-2 border-transparent"
-                      )}>
-                        {badge.icon}
-                      </div>
-                      <div className={cn(
-                        "text-[9px] font-black tracking-tighter leading-tight",
-                        isUnlocked ? "text-text-main" : "text-gray-lock"
-                      )}>
-                        {badge.name}
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
+            </div>
 
-              {/* Completion Badge */}
-              <div className="flex justify-center">
-                {BADGES.filter(b => b.track === trackInfo.id && b.type === 'completeBadge').map(badge => {
-                   const isUnlocked = state.unlockedBadges.includes(badge.id);
-                   return (
-                    <motion.div 
-                      key={badge.id}
-                      onClick={() => isUnlocked ? setShowRewardModal(trackInfo.id as Track) : setSelectedBadge(badge)}
-                      whileHover={isUnlocked ? { scale: 1.05 } : {}}
-                      className="flex flex-col items-center text-center cursor-pointer relative"
-                    >
-                      <div className={cn(
-                        "w-24 h-24 rounded-full flex items-center justify-center text-4xl transition-all duration-500 z-10",
-                        isUnlocked ? `bg-gradient-to-br ${trackInfo.color} shadow-[0_10px_25px_rgba(0,0,0,0.1)] border-4 border-white` : "bg-gray-line/30 text-gray-lock filter grayscale opacity-40 scale-90 border-4 border-transparent"
-                      )}>
-                        {badge.icon}
-                        {!isUnlocked && (
-                           <div className="absolute inset-0 flex items-center justify-center bg-black/5 rounded-full backdrop-blur-[1px]">
-                             <Lock className="w-6 h-6 text-gray-lock" />
-                           </div>
-                        )}
-                      </div>
-                      {isUnlocked && (
-                        <div className="absolute inset-0 bg-white/20 rounded-full animate-ping opacity-20" />
-                      )}
-                      <div className="mt-3 bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-line/30 z-20">
-                        <span className={cn(
-                          "text-xs font-black tracking-widest",
+            {[
+              { id: 'veg', name: '蔬食行動', color: 'from-[#E8F5D8] to-[#9FD356]', border: 'border-[#9FD356]' },
+              { id: 'plastic', name: '淨塑行動', color: 'from-[#E1EEFA] to-[#3C91E6]', border: 'border-[#3C91E6]' },
+              { id: 'dual', name: '雙軌挑戰', color: 'from-[#FFF0E5] to-[#FF9F1C]', border: 'border-[#FF9F1C]' }
+            ].sort((a, b) => {
+              if (a.id === state.track) return -1;
+              if (b.id === state.track) return 1;
+              return 0;
+            }).map(trackInfo => (
+              <div key={trackInfo.id} className="mb-12">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-[1px] flex-1 bg-gray-line/50"></div>
+                  <span className="text-xs font-black text-text-main tracking-widest">{trackInfo.name}</span>
+                  <div className="h-[1px] flex-1 bg-gray-line/50"></div>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-y-6 gap-x-2 mb-6">
+                  {BADGES.filter(b => b.track === trackInfo.id && b.type === 'levelBadge').map(badge => {
+                    const isUnlocked = state.unlockedBadges.includes(badge.id);
+                    return (
+                      <motion.div 
+                        key={badge.id}
+                        onClick={() => setSelectedBadge(badge)}
+                        whileHover={isUnlocked ? { y: -2 } : {}}
+                        className="flex flex-col items-center text-center group cursor-pointer"
+                      >
+                        <div className={cn(
+                          "w-14 h-14 rounded-full mb-2 flex items-center justify-center text-xl transition-all duration-500",
+                          isUnlocked ? `bg-gradient-to-br ${trackInfo.color} shadow-float border-2 ${trackInfo.border}` : "bg-gray-line/50 text-gray-lock filter grayscale opacity-40 scale-90 border-2 border-transparent"
+                        )}>
+                          {badge.icon}
+                        </div>
+                        <div className={cn(
+                          "text-[9px] font-black tracking-tighter leading-tight",
                           isUnlocked ? "text-text-main" : "text-gray-lock"
                         )}>
                           {badge.name}
-                        </span>
-                      </div>
-                    </motion.div>
-                   )
-                })}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                {/* Completion Badge */}
+                <div className="flex justify-center">
+                  {BADGES.filter(b => b.track === trackInfo.id && b.type === 'completeBadge').map(badge => {
+                     const isUnlocked = state.unlockedBadges.includes(badge.id);
+                     return (
+                      <motion.div 
+                        key={badge.id}
+                        onClick={() => isUnlocked ? setShowRewardModal(trackInfo.id as Track) : setSelectedBadge(badge)}
+                        whileHover={isUnlocked ? { scale: 1.05 } : {}}
+                        className="flex flex-col items-center text-center cursor-pointer relative"
+                      >
+                        <div className={cn(
+                          "w-24 h-24 rounded-full flex items-center justify-center text-4xl transition-all duration-500 z-10",
+                          isUnlocked ? `bg-gradient-to-br ${trackInfo.color} shadow-[0_10px_25px_rgba(0,0,0,0.1)] border-4 border-white` : "bg-gray-line/30 text-gray-lock filter grayscale opacity-40 scale-90 border-4 border-transparent"
+                        )}>
+                          {badge.icon}
+                          {!isUnlocked && (
+                             <div className="absolute inset-0 flex items-center justify-center bg-black/5 rounded-full backdrop-blur-[1px]">
+                               <Lock className="w-6 h-6 text-gray-lock" />
+                             </div>
+                          )}
+                        </div>
+                        {isUnlocked && (
+                          <div className="absolute inset-0 bg-white/20 rounded-full animate-ping opacity-20" />
+                        )}
+                        <div className="mt-3 bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-line/30 z-20">
+                          <span className={cn(
+                            "text-xs font-black tracking-widest",
+                            isUnlocked ? "text-text-main" : "text-gray-lock"
+                          )}>
+                            {badge.name}
+                          </span>
+                        </div>
+                      </motion.div>
+                     )
+                  })}
+                </div>
               </div>
+            ))}
+          </div>
+        ) : (
+          <div className="px-8 pb-32 flex flex-col gap-5">
+            <div className="flex flex-col gap-1.5 mb-2">
+              <h3 className="font-black text-lg text-text-main tracking-tight">系統設定與操作</h3>
+              <p className="text-[11px] text-text-sub font-semibold">在這裡管理您的挑戰進度和帳號設定。</p>
             </div>
-          ))}
-        </div>
 
-        <div className="px-8 mt-4 pb-32 flex flex-col gap-4">
-          <button 
-            onClick={() => {
-              setTempTrack(state.track);
-              setCurrentView('select');
-            }}
-            className="w-full bg-white border border-gray-line text-text-main font-black py-4 rounded-2xl btn-active shadow-sm flex items-center justify-center gap-2"
-          >
-            🔄 切換挑戰軌道
-          </button>
+            <button 
+              onClick={() => {
+                setTempTrack(state.track);
+                setCurrentView('select');
+              }}
+              className="w-full bg-white border border-gray-line text-text-main font-black py-4 rounded-2xl btn-active shadow-sm flex items-center justify-center gap-2"
+            >
+              🔄 切換挑戰軌道
+            </button>
 
-          <button 
-            onClick={() => signOut(auth)}
-            className="w-full bg-text-main text-white font-black py-4 rounded-2xl btn-active shadow-float flex items-center justify-center gap-2"
-          >
-            <LogOut className="w-5 h-5" /> 登出帳號
-          </button>
+            <button 
+              onClick={() => signOut(auth)}
+              className="w-full bg-text-main text-white font-black py-4 rounded-2xl btn-active shadow-float flex items-center justify-center gap-2"
+            >
+              <LogOut className="w-5 h-5" /> 登出帳號
+            </button>
 
-          {!isConfirmingReset ? (
-            <>
-              {user?.email === 'toafhc@gmail.com' && (
+            {!isConfirmingReset ? (
+              <>
+                {user?.email === 'toafhc@gmail.com' && (
+                  <button 
+                    onClick={() => setCurrentView('admin')}
+                    className="w-full bg-[#FFD166] text-text-main font-black py-4 rounded-2xl btn-active shadow-lg shadow-orange-200 flex items-center justify-center gap-2 border-b-4 border-orange-300"
+                  >
+                    <Star className="w-5 h-5 fill-current text-white stroke-orange-400" /> 進入數據收集後台
+                  </button>
+                )}
                 <button 
-                  onClick={() => setCurrentView('admin')}
-                  className="w-full bg-[#FFD166] text-text-main font-black py-4 rounded-2xl btn-active shadow-lg shadow-orange-200 flex items-center justify-center gap-2 border-b-4 border-orange-300"
+                  onClick={() => setIsConfirmingReset(true)}
+                  className="w-full py-4 rounded-2xl border-2 border-red-100 text-red-400 font-black text-sm hover:bg-red-50 transition-colors btn-active flex items-center justify-center gap-2"
                 >
-                  <Star className="w-5 h-5 fill-current text-white stroke-orange-400" /> 進入數據收集後台
+                  重置挑戰進度
                 </button>
-              )}
-              <button 
-                onClick={() => setIsConfirmingReset(true)}
-                className="w-full py-4 rounded-2xl border-2 border-red-100 text-red-400 font-black text-sm hover:bg-red-50 transition-colors btn-active flex items-center justify-center gap-2"
-              >
-                重置挑戰進度
-              </button>
-            </>
-          ) : (
-            <div className="flex flex-col gap-3">
-              <p className="text-[11px] text-red-500 font-bold text-center">確定要重置嗎？所有 EXP 與徽章將會消失。</p>
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => setIsConfirmingReset(false)}
-                  className="flex-1 py-3 rounded-xl bg-gray-line text-text-main font-black text-xs btn-active"
-                >
-                  取消
-                </button>
-                <button 
-                  onClick={() => {
-                    updateFirebaseState({
-                      track: null,
-                      level: 1,
-                      exp: 0,
-                      streak: 0,
-                      checkInCount: 0,
-                      co2Saved: 0,
-                      unlockedBadges: ['novice'],
-                      lastCheckInDate: null,
-                      hasSeenPreview: false,
-                      hasCompletedTutorial: false,
-                    });
-                    setCurrentView('preview');
-                  }}
-                  className="flex-2 py-3 rounded-xl bg-red-500 text-white font-black text-xs btn-active shadow-lg shadow-red-500/20"
-                >
-                  是的，我要重置
-                </button>
+              </>
+            ) : (
+              <div className="flex flex-col gap-3 p-4 bg-red-50 rounded-3xl border border-red-100">
+                <p className="text-[11px] text-red-500 font-bold text-center leading-relaxed">
+                  ⚠️ 確定要重置嗎？<br/>這將會永久刪除您當前的 EXP 經驗值和所有已解鎖的徽章成就，此操作無法還原。
+                </p>
+                <div className="flex gap-2.5 mt-1">
+                  <button 
+                    onClick={() => setIsConfirmingReset(false)}
+                    className="flex-1 py-3 rounded-xl bg-white border border-gray-line text-text-main font-black text-xs btn-active"
+                  >
+                    取消
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      updateFirebaseState({
+                        track: null,
+                        level: 1,
+                        exp: 0,
+                        streak: 0,
+                        checkInCount: 0,
+                        co2Saved: 0,
+                        unlockedBadges: ['novice'],
+                        lastCheckInDate: null,
+                        hasSeenPreview: false,
+                        hasCompletedTutorial: false,
+                      });
+                      setIsConfirmingReset(false);
+                      setProfileTab('badges'); // reset tab
+                      setCurrentView('select');
+                    }}
+                    className="flex-2 py-3 rounded-xl bg-red-500 text-white font-black text-xs btn-active shadow-lg shadow-red-500/20"
+                  >
+                    是的，我要重置
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     );
   };
@@ -2074,164 +2061,129 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Interactive Onboarding Tutorial Overlay */}
+      {/* Onboarding / Tutorial Carousel Modal */}
       <AnimatePresence>
-        {tutorialStep !== null && (
-          <div className="absolute inset-0 z-[140] select-none pointer-events-none">
-            {spotlightCoords ? (
-              <>
-                {/* 4 Blocker segments for the spotlight effect */}
-                <div 
-                  className="absolute left-0 right-0 top-0 bg-black/65 pointer-events-auto transition-all duration-300"
-                  style={{ height: spotlightCoords.top }}
-                />
-                <div 
-                  className="absolute left-0 right-0 bottom-0 bg-black/65 pointer-events-auto transition-all duration-300"
-                  style={{ top: spotlightCoords.top + spotlightCoords.height }}
-                />
-                <div 
-                  className="absolute left-0 bg-black/65 pointer-events-auto transition-all duration-300"
-                  style={{ 
-                    top: spotlightCoords.top, 
-                    height: spotlightCoords.height, 
-                    width: spotlightCoords.left 
-                  }}
-                />
-                <div 
-                  className="absolute right-0 bg-black/65 pointer-events-auto transition-all duration-300"
-                  style={{ 
-                    top: spotlightCoords.top, 
-                    height: spotlightCoords.height, 
-                    left: spotlightCoords.left + spotlightCoords.width 
-                  }}
-                />
+        {showTutorialModal && (
+          <div className="absolute inset-0 z-[150] bg-black/65 backdrop-blur-sm pointer-events-auto flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-[40px] p-8 w-full max-w-[320px] text-center shadow-2xl border-4 border-white flex flex-col items-center relative"
+            >
+              {/* Pagination Dots */}
+              <div className="flex gap-2 mb-6">
+                {[0, 1, 2, 3].map(idx => (
+                  <div 
+                    key={idx}
+                    className={cn(
+                      "w-2 h-2 rounded-full transition-all duration-300",
+                      idx === tutorialSlide ? "w-6 bg-text-main" : "bg-gray-line"
+                    )}
+                  />
+                ))}
+              </div>
 
-                {/* Highlight Frame */}
-                <div 
-                  className="absolute border-[3px] border-white rounded-[24px] pointer-events-none shadow-[0_0_15px_rgba(255,255,255,0.8)] transition-all duration-300 animate-pulse"
-                  style={{
-                    top: spotlightCoords.top - 4,
-                    left: spotlightCoords.left - 4,
-                    width: spotlightCoords.width + 8,
-                    height: spotlightCoords.height + 8,
-                  }}
-                />
-
-                {/* Popover Tooltip Dialog Card */}
+              {/* Slide Content */}
+              {tutorialSlide === 0 && (
                 <motion.div 
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="absolute w-[290px] pointer-events-auto z-[145]"
-                  style={{
-                    left: Math.max(16, Math.min(400 - 306, spotlightCoords.left + (spotlightCoords.width - 290) / 2)),
-                    top: spotlightCoords.top > 280 ? 'auto' : spotlightCoords.top + spotlightCoords.height + 12,
-                    bottom: spotlightCoords.top > 280 ? `calc(100% - ${spotlightCoords.top}px + 12px)` : 'auto'
-                  }}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex flex-col items-center"
                 >
-                  <div className="bg-white rounded-[32px] p-5.5 shadow-2xl border-4 border-white text-center relative">
-                    {/* Tiny arrow pointing to the spotlight */}
-                    <div 
-                      className={cn(
-                        "absolute left-1/2 -translate-x-1/2 w-4 h-4 bg-white rotate-45 border-t border-l border-white/50",
-                        spotlightCoords.top > 280 ? "-bottom-2 border-t-0 border-l-0 border-b border-r" : "-top-2"
-                      )}
-                    />
-
-                    {tutorialStep === 1 && (
-                      <div>
-                        <div className="text-2xl mb-2">🏆</div>
-                        <h4 className="font-black text-text-main text-sm mb-1.5">1. 升級與稱號系統</h4>
-                        <p className="text-[11px] text-text-sub font-semibold leading-relaxed mb-4">
-                          不管你挑戰哪條路線，累積的經驗值都算在這裡！升級可以提升等級與解鎖精美徽章稱號！
-                        </p>
-                        <button 
-                          onClick={() => setTutorialStep(2)}
-                          className="w-full bg-text-main text-white font-black py-3 rounded-xl text-xs btn-active flex items-center justify-center gap-1 shadow-md"
-                        >
-                          知道了，下一步 <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    )}
-
-                    {tutorialStep === 2 && (
-                      <div>
-                        <div className="text-2xl mb-2">🗺️</div>
-                        <h4 className="font-black text-text-main text-sm mb-1.5">2. 展開關卡挑戰</h4>
-                        <p className="text-[11px] text-text-sub font-semibold leading-relaxed mb-3">
-                          點擊閃爍的 **「前往挑戰地圖」** 按鈕，查看你當前軌道的所有關卡！
-                        </p>
-                        <div className="text-[10px] text-[#FF9F1C] font-black animate-bounce mt-1">
-                          👆 請直接點擊下方發光的按鈕繼續
-                        </div>
-                      </div>
-                    )}
-
-                    {tutorialStep === 3 && (
-                      <div>
-                        <div className="text-2xl mb-2">📍</div>
-                        <h4 className="font-black text-text-main text-sm mb-1.5">3. 點選挑戰關卡</h4>
-                        <p className="text-[11px] text-text-sub font-semibold leading-relaxed mb-3">
-                          歡迎來到永續地圖！**請點擊關卡一**，打開它的任務說明。
-                        </p>
-                        <div className="text-[10px] text-[#FF9F1C] font-black animate-bounce mt-1">
-                          👆 請直接點擊下方發光的關卡點繼續
-                        </div>
-                      </div>
-                    )}
-
-                    {tutorialStep === 4 && (
-                      <div>
-                        <div className="text-2xl mb-2">📸</div>
-                        <h4 className="font-black text-text-main text-sm mb-1.5">4. 開始打卡行動</h4>
-                        <p className="text-[11px] text-text-sub font-semibold leading-relaxed mb-3">
-                          在這裡閱讀任務指南。請點選 **「立即打卡行動」** 按鈕進入打卡！
-                        </p>
-                        <div className="text-[10px] text-[#FF9F1C] font-black animate-bounce mt-1">
-                          👆 請點選下方發光的按鈕繼續
-                        </div>
-                      </div>
-                    )}
-
-                    {tutorialStep === 5 && (
-                      <div>
-                        <div className="text-2xl mb-2">📋</div>
-                        <h4 className="font-black text-text-main text-sm mb-1.5">5. 勾選與送出</h4>
-                        <p className="text-[11px] text-text-sub font-semibold leading-relaxed mb-4">
-                          勾選你實踐的環保項目並填寫心得。完成後**送出打卡**，即可賺取 EXP 並完成教學！
-                        </p>
-                        <div className="text-[10px] text-[#FF9F1C] font-black animate-bounce mb-3">
-                          👆 請先勾選項目並按下方的送出打卡
-                        </div>
-                        <button 
-                          onClick={async () => {
-                            setTutorialStep(null);
-                            await updateFirebaseState({ hasCompletedTutorial: true });
-                          }}
-                          className="w-full py-2.5 rounded-xl border border-gray-line text-xs text-text-sub font-black hover:bg-gray-50 transition-colors btn-active"
-                        >
-                          直接結束教學 ⏭️
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Skip Tutorial text button */}
-                  {tutorialStep !== 5 && (
-                    <div className="text-center mt-4">
-                      <button 
-                        onClick={async () => {
-                          setTutorialStep(null);
-                          await updateFirebaseState({ hasCompletedTutorial: true });
-                        }}
-                        className="text-white/70 hover:text-white font-black text-[11px] underline underline-offset-4 tracking-widest uppercase transition-colors"
-                      >
-                        跳過新手教學 Skip
-                      </button>
-                    </div>
-                  )}
+                  <div className="text-4xl mb-4 animate-bounce">🏆</div>
+                  <h4 className="font-black text-text-main text-lg mb-2">1. 累積 EXP 解鎖榮譽</h4>
+                  <p className="text-xs text-text-sub font-semibold leading-relaxed mb-6">
+                    在「永續大挑戰」中，你每一次的綠色實踐都會轉化成 EXP 經驗值！提升等級還能解鎖各階段專屬稱號與精美徽章！
+                  </p>
                 </motion.div>
-              </>
-            ) : null}
+              )}
+
+              {tutorialSlide === 1 && (
+                <motion.div 
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex flex-col items-center"
+                >
+                  <div className="text-4xl mb-4 animate-bounce">🗺️</div>
+                  <h4 className="font-black text-text-main text-lg mb-2">2. 展開地圖任務挑戰</h4>
+                  <p className="text-xs text-text-sub font-semibold leading-relaxed mb-6">
+                    點選下方導覽列的「地圖」或首頁的「前往挑戰地圖」按鈕，即可查看該軌道的所有關卡，開啟你的冒險之旅！
+                  </p>
+                </motion.div>
+              )}
+
+              {tutorialSlide === 2 && (
+                <motion.div 
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex flex-col items-center"
+                >
+                  <div className="text-4xl mb-4 animate-bounce">📸</div>
+                  <h4 className="font-black text-text-main text-lg mb-2">3. 綠色實踐與打卡</h4>
+                  <p className="text-xs text-text-sub font-semibold leading-relaxed mb-6">
+                    點開關卡並點擊「立即打卡行動」，勾選你實行的環保項目、填寫心得，送出後就能獲得 EXP 並與大家分享喜悅！
+                  </p>
+                </motion.div>
+              )}
+
+              {tutorialSlide === 3 && (
+                <motion.div 
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex flex-col items-center"
+                >
+                  <div className="text-4xl mb-4 animate-bounce">⚙️</div>
+                  <h4 className="font-black text-text-main text-lg mb-2">4. 隨時切換挑戰軌道</h4>
+                  <p className="text-xs text-text-sub font-semibold leading-relaxed mb-6">
+                    除了蔬食、減塑，你可以隨時到個人帳號設定切換想要挑戰的軌道，所有已解鎖的徽章和經驗值進度都會被完美保留！
+                  </p>
+                </motion.div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="w-full flex flex-col gap-2 mt-2">
+                {tutorialSlide < 3 ? (
+                  <button 
+                    onClick={() => setTutorialSlide(prev => prev + 1)}
+                    className="w-full bg-text-main text-white font-black py-3 rounded-2xl text-xs btn-active flex items-center justify-center gap-1.5 shadow-md shadow-text-main/10"
+                  >
+                    了解，下一步 <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                ) : (
+                  <button 
+                    onClick={async () => {
+                      setShowTutorialModal(false);
+                      await updateFirebaseState({ hasCompletedTutorial: true });
+                    }}
+                    className="w-full bg-text-main text-white font-black py-3 rounded-2xl text-xs btn-active flex items-center justify-center gap-1.5 shadow-md shadow-text-main/10"
+                  >
+                    開始永續挑戰！ 🎉
+                  </button>
+                )}
+
+                {tutorialSlide > 0 && (
+                  <button 
+                    onClick={() => setTutorialSlide(prev => prev - 1)}
+                    className="w-full py-2.5 rounded-xl border border-gray-line text-xs text-text-sub font-black hover:bg-gray-50 transition-colors btn-active"
+                  >
+                    上一步
+                  </button>
+                )}
+
+                {tutorialSlide < 3 && (
+                  <button 
+                    onClick={async () => {
+                      setShowTutorialModal(false);
+                      await updateFirebaseState({ hasCompletedTutorial: true });
+                    }}
+                    className="text-text-sub/50 hover:text-text-sub font-bold text-[10px] tracking-widest uppercase transition-colors py-2 mt-1"
+                  >
+                    跳過教學 Skip
+                  </button>
+                )}
+              </div>
+            </motion.div>
           </div>
         )}
       </AnimatePresence>
