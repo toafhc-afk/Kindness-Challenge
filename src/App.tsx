@@ -246,7 +246,8 @@ export default function App() {
       const stateToUse = localState || firebaseState;
       if (stateToUse) {
         if (!stateToUse.hasSeenPreview) {
-          setCurrentView('preview');
+          updateFirebaseState({ hasSeenPreview: true });
+          setCurrentView('select');
         } else if (!stateToUse.track) {
           setCurrentView('select');
         } else if (currentView === 'preview' || currentView === 'select') {
@@ -2123,9 +2124,8 @@ export default function App() {
                   className="absolute w-[290px] pointer-events-auto z-[145]"
                   style={{
                     left: Math.max(16, Math.min(400 - 306, spotlightCoords.left + (spotlightCoords.width - 290) / 2)),
-                    top: spotlightCoords.top > 280 
-                      ? spotlightCoords.top - 180 // Above
-                      : spotlightCoords.top + spotlightCoords.height + 16 // Below
+                    top: spotlightCoords.top > 280 ? 'auto' : spotlightCoords.top + spotlightCoords.height + 12,
+                    bottom: spotlightCoords.top > 280 ? `calc(100% - ${spotlightCoords.top}px + 12px)` : 'auto'
                   }}
                 >
                   <div className="bg-white rounded-[32px] p-5.5 shadow-2xl border-4 border-white text-center relative">
@@ -2231,14 +2231,7 @@ export default function App() {
                   )}
                 </motion.div>
               </>
-            ) : (
-              // Initial fallback when spotlight coordinates are loading
-              <div className="absolute inset-0 bg-black/65 pointer-events-auto flex items-center justify-center">
-                <div className="text-center text-white/80 text-sm font-black animate-pulse">
-                  載入導覽指引中...
-                </div>
-              </div>
-            )}
+            ) : null}
           </div>
         )}
       </AnimatePresence>
