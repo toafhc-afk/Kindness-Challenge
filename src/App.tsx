@@ -470,7 +470,7 @@ export default function App() {
                 </div>
               ) : t === 'dual' ? (
                 <div className="absolute top-0 right-0 bg-[#FFD166] text-text-main text-[10px] font-black px-4 py-1.5 rounded-bl-xl shadow-sm">
-                  推薦
+                  最高榮耀 👑
                 </div>
               ) : null}
               <div className={cn(
@@ -666,21 +666,44 @@ export default function App() {
                 榮譽里程碑
               </span>
               <h3 className="font-black text-xl text-text-main mb-1 tracking-tight">
-                恭喜完成{track === 'veg' ? '蔬食' : track === 'plastic' ? '淨塑' : '雙軌'}任務！✨
+                {track === 'dual' ? "恭喜達成最高榮耀【永續守護神】！ 👑✨" : `恭喜完成${track === 'veg' ? '蔬食' : '淨塑'}任務！✨`}
               </h3>
               <p className="text-[13px] text-text-sub mb-6 leading-relaxed font-medium">
-                你已經成功集滿本軌道的 4 枚關卡章！挑戰其他軌道，集齊全部徽章以獲得最高榮耀【永續守護神】吧！
+                {track === 'dual' 
+                  ? "恭喜您已成功集滿所有挑戰軌道的徽章，榮登永續金榜！點選下方連結，領取您專屬的永續守護神榮譽證書！"
+                  : "您已成功集滿本軌道的所有關卡徽章！建議檢視證書或挑戰其他軌道，集齊全部徽章解鎖終極榮耀【永續守護神】吧！"
+                }
               </p>
-              <button 
-                onClick={() => {
-                  setTempTrack(track);
-                  setCurrentView('select');
-                }} 
-                className="w-full text-white font-black py-4 rounded-2xl text-sm btn-active flex items-center justify-center gap-2"
-                style={{ backgroundColor: tc }}
-              >
-                挑戰其他軌道 <ChevronRight className="w-4 h-4" />
-              </button>
+              <div className="flex flex-col gap-2">
+                {track === 'dual' ? (
+                  <button 
+                    onClick={() => setShowRewardModal('dual')} 
+                    className="w-full text-white font-black py-4 rounded-2xl text-sm btn-active flex items-center justify-center gap-2 shadow-lg hover:scale-[0.98] transition-transform"
+                    style={{ backgroundColor: tc }}
+                  >
+                    🎓 領取永續守護神證書
+                  </button>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => setShowRewardModal(track)} 
+                      className="w-full bg-white border border-gray-line text-text-main font-black py-4 rounded-2xl text-sm btn-active flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      🎓 檢視本軌道證書
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setTempTrack(track);
+                        setCurrentView('select');
+                      }} 
+                      className="w-full text-white font-black py-4 rounded-2xl text-sm btn-active flex items-center justify-center gap-2"
+                      style={{ backgroundColor: tc }}
+                    >
+                      挑戰其他軌道 <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+              </div>
             </motion.div>
           ) : (
             <motion.div 
@@ -1280,10 +1303,6 @@ export default function App() {
     <div className="flex flex-col min-h-full bg-gray-line/20">
       <div className="sticky top-0 z-20 px-6 py-6 bg-white/90 backdrop-blur-xl border-b border-gray-line/50 flex justify-between items-center">
         <h2 className="text-xl font-black text-text-main tracking-tight">探索動態</h2>
-        <div className="flex gap-2">
-          <span className="text-[10px] font-black bg-text-main text-white px-4 py-2 rounded-full cursor-pointer uppercase tracking-widest">全部</span>
-          <span className="text-[10px] font-black text-text-sub/50 px-4 py-2 cursor-pointer uppercase tracking-widest hover:text-text-main transition-colors">關注</span>
-        </div>
       </div>
       
       <div className="px-6 py-8 space-y-6">
@@ -1983,6 +2002,15 @@ export default function App() {
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="absolute inset-0 bg-text-main/80 backdrop-blur-md"
             />
+            {/* Sparkles / Confetti decorations */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden z-10 flex items-center justify-center">
+              <div className="absolute top-10 left-10 text-xl animate-bounce" style={{ animationDelay: '0.2s' }}>✨</div>
+              <div className="absolute top-20 right-12 text-2xl animate-bounce" style={{ animationDelay: '0.5s' }}>🎉</div>
+              <div className="absolute bottom-24 left-14 text-xl animate-bounce" style={{ animationDelay: '0.8s' }}>🌸</div>
+              <div className="absolute bottom-12 right-10 text-2xl animate-bounce" style={{ animationDelay: '0.3s' }}>⭐</div>
+              <div className="absolute top-1/2 left-8 text-lg animate-bounce" style={{ animationDelay: '1.1s' }}>🎈</div>
+              <div className="absolute top-1/3 right-8 text-xl animate-bounce" style={{ animationDelay: '1.4s' }}>✨</div>
+            </div>
             <motion.div 
               key={newUnlockedBadges[0].id}
               initial={{ scale: 0.5, opacity: 0, rotate: -10 }} 
@@ -2056,6 +2084,103 @@ export default function App() {
               >
                 收下這份紀念 <Heart className="w-5 h-5 fill-current" />
               </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Commemorative Certificate Modal */}
+      <AnimatePresence>
+        {showRewardModal !== null && (
+          <div className="absolute inset-0 z-[120] bg-black/70 backdrop-blur-md flex items-center justify-center p-5 pointer-events-auto">
+            <motion.div 
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              className="bg-gradient-to-br from-[#FFFDF9] to-[#F7F2E8] w-full max-w-[340px] rounded-[32px] p-6 shadow-2xl relative border-8 border-double border-[#FFD166]/50 flex flex-col items-center text-center overflow-hidden"
+            >
+              {/* Gold Ribbon Corner Decoration */}
+              <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none overflow-hidden">
+                <div className="absolute top-3 right-[-24px] w-24 bg-[#FF9F1C] text-white text-[8px] font-black py-0.5 rotate-45 uppercase tracking-widest text-center shadow-sm">
+                  OFFICIAL
+                </div>
+              </div>
+
+              {/* Certificate Header */}
+              <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#FFF0E5] to-[#FFD166]/30 flex items-center justify-center text-4xl mb-4 border-2 border-white shadow-md relative">
+                🏅
+              </div>
+
+              <h2 className="text-xl font-black text-text-main tracking-tight font-serif mb-1">
+                永續大挑戰 榮譽證書
+              </h2>
+              <div className="text-[10px] font-black text-text-sub uppercase tracking-[0.2em] mb-4">
+                CERTIFICATE OF HONOR
+              </div>
+
+              {/* Recipient */}
+              <div className="w-full h-[1px] bg-gray-line/50 mb-3" />
+              <div className="text-[11px] font-bold text-text-sub/70 mb-1">頒發給探險家</div>
+              <div className="text-lg font-black text-text-main border-b-2 border-text-main/20 px-4 pb-1 mb-3 inline-block tracking-wide">
+                {user?.displayName || "訪客探險家"}
+              </div>
+
+              {/* Description */}
+              <p className="text-[11px] text-text-sub font-semibold leading-relaxed mb-5 px-1">
+                {showRewardModal === 'dual' ? (
+                  <>
+                    恭喜完成最高難度的 <strong>【雙軌挑戰】</strong> 任務！您已成功集滿所有軌道的徽章（蔬食、減塑、雙軌整合），在日常生活中實踐永續行動，展現無比的毅力與愛心，特頒此證，以茲表揚其為守護地球做出的卓越貢獻！
+                  </>
+                ) : showRewardModal === 'veg' ? (
+                  <>
+                    恭喜完成 <strong>【蔬食行動】</strong> 任務！您已成功解鎖所有蔬食關卡，為地球減少碳排放做出實際行動，特頒此證，以茲表揚其優異表現！
+                  </>
+                ) : (
+                  <>
+                    恭喜完成 <strong>【減塑行動】</strong> 任務！您已成功解鎖所有減塑關卡，為保護海洋與生態做出實際行動，特頒此證，以茲表揚其優異表現！
+                  </>
+                )}
+              </p>
+
+              {/* Seals & Signatures */}
+              <div className="w-full flex justify-between items-center text-[10px] text-text-sub/70 font-bold mb-6 px-2">
+                <div className="flex flex-col items-center">
+                  <div className="h-6 flex items-end mb-1 border-b border-text-sub/20 w-16 pb-0.5 font-serif italic text-text-main/80 text-[8px]">
+                    toafhc team
+                  </div>
+                  <span>慈心大挑戰小組</span>
+                </div>
+                <div className="relative">
+                  {/* Decorative stamp circle */}
+                  <div className="absolute inset-0 m-auto -translate-y-2 w-10 h-10 border-2 border-red-500/30 rounded-full flex items-center justify-center text-[8px] text-red-500/40 font-black rotate-12 pointer-events-none uppercase tracking-tighter">
+                    Approved
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <div className="h-6 flex items-end mb-1 border-b border-text-sub/20 w-20 pb-0.5 font-mono text-[8px] text-text-main/80">
+                      {new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                    </div>
+                    <span>頒發日期</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="w-full flex flex-col gap-2">
+                <button 
+                  onClick={() => {
+                    alert('💡 提示：長按螢幕即可儲存證書畫面喔！');
+                  }}
+                  className="w-full bg-[#FFD166] text-text-main font-black py-3 rounded-2xl text-xs btn-active flex items-center justify-center gap-1.5 shadow-md shadow-orange-200 border-b-4 border-orange-300"
+                >
+                  <Download className="w-3.5 h-3.5" /> 儲存證書至手機
+                </button>
+                <button 
+                  onClick={() => setShowRewardModal(null)}
+                  className="w-full py-2.5 rounded-xl border border-gray-line text-xs text-text-sub font-black hover:bg-gray-50 transition-colors btn-active"
+                >
+                  關閉證書
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
