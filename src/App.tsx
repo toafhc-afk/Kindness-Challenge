@@ -104,6 +104,7 @@ export default function App() {
   const [checkinSelectedFile, setCheckinSelectedFile] = useState<File | null>(null);
   const [checkinPreviewUrl, setCheckinPreviewUrl] = useState<string | null>(null);
   const [checkinIsUploading, setCheckinIsUploading] = useState(false);
+  const [checkinSelectedOptions, setCheckinSelectedOptions] = useState<string[]>([]);
 
   // Feed Comments states
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
@@ -115,6 +116,7 @@ export default function App() {
 
   // Profile reset state
   const [isConfirmingReset, setIsConfirmingReset] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState<number | null>(null);
 
   // Map interactive state
   const [selectedMapTaskIndex, setSelectedMapTaskIndex] = useState<number | null>(null);
@@ -209,6 +211,14 @@ export default function App() {
       }
     }
   }, [authLoading, user, firebaseState]);
+
+  // Trigger tutorial if not completed yet
+  useEffect(() => {
+    const stateToUse = localState || firebaseState;
+    if (user && stateToUse && stateToUse.track && !stateToUse.hasCompletedTutorial && currentView === 'dashboard' && tutorialStep === null) {
+      setTutorialStep(1);
+    }
+  }, [user, localState, firebaseState, currentView, tutorialStep]);
 
   // Load feed from Firestore
   useEffect(() => {
@@ -409,53 +419,72 @@ export default function App() {
       <p className="text-sm text-text-sub mb-8 font-medium">選擇適合你的路線，開啟你的慈心旅程！</p>
 
       <div className="space-y-4 mb-8">
-        {(['veg', 'plastic', 'dual'] as Track[]).map((t) => (
-          <motion.div 
-            key={t}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setTempTrack(t)}
-            className={cn(
-              "p-5 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden flex items-center gap-4 bg-white shadow-soft",
-              tempTrack === t ? "border-text-main shadow-lg" : "border-transparent"
-            )}
-          >
-            {t === 'dual' && (
-              <div className="absolute top-0 right-0 bg-[#FFD166] text-text-main text-[10px] font-black px-4 py-1.5 rounded-bl-xl shadow-sm">
-                推薦
+        {(['veg', 'plastic', 'dual'] as Track[]).map((t) => {
+          const isLocked = t === 'dual' && 
+            getLevelForTrack('veg', state.unlockedBadges) < 3 && 
+            getLevelForTrack('plastic', state.unlockedBadges) < 3;
+
+          return (
+            <motion.div 
+              key={t}
+              whileTap={isLocked ? {} : { scale: 0.98 }}
+              onClick={() => {
+                if (isLocked) {
+                  alert('🔒 雙軌挑戰尚未解鎖！\n需要將【蔬食任務】或【淨塑任務】挑戰到 Lv.3 (完成前兩關) 後，才能解鎖更具挑戰性的雙軌整合任務喔！加油！');
+                  return;
+                }
+                setTempTrack(t);
+              }}
+              className={cn(
+                "p-5 rounded-2xl border-2 transition-all relative overflow-hidden flex items-center gap-4 bg-white shadow-soft",
+                isLocked ? "opacity-60 bg-gray-50 border-gray-line/50 cursor-not-allowed select-none filter grayscale" : 
+                tempTrack === t ? "border-text-main shadow-lg cursor-pointer" : "border-transparent cursor-pointer"
+              )}
+            >
+              {isLocked ? (
+                <div className="absolute top-0 right-0 bg-gray-lock text-white text-[9px] font-black px-3 py-1.5 rounded-bl-xl shadow-sm flex items-center gap-1">
+                  鎖定中 <Lock className="w-2.5 h-2.5" />
+                </div>
+              ) : t === 'dual' ? (
+                <div className="absolute top-0 right-0 bg-[#FFD166] text-text-main text-[10px] font-black px-4 py-1.5 rounded-bl-xl shadow-sm">
+                  推薦
+                </div>
+              ) : null}
+              <div className={cn(
+                "w-14 h-14 rounded-full flex items-center justify-center text-3xl shrink-0 shadow-inner-soft",
+                t === 'veg' ? "bg-green-light text-green-main" : 
+                t === 'plastic' ? "bg-blue-light text-blue-main" : 
+                "bg-gradient-to-br from-green-light to-blue-light"
+              )}>
+                {t === 'veg' ? '🥗' : t === 'plastic' ? '💧' : '🌍'}
               </div>
-            )}
-            <div className={cn(
-              "w-14 h-14 rounded-full flex items-center justify-center text-3xl shrink-0 shadow-inner-soft",
-              t === 'veg' ? "bg-green-light text-green-main" : 
-              t === 'plastic' ? "bg-blue-light text-blue-main" : 
-              "bg-gradient-to-br from-green-light to-blue-light"
-            )}>
-              {t === 'veg' ? '🥗' : t === 'plastic' ? '💧' : '🌍'}
-            </div>
-            <div className="flex-1">
-              <h3 className="font-black text-lg text-text-main">
-                {t === 'veg' ? '蔬食任務' : t === 'plastic' ? '淨塑任務' : '雙軌挑戰'}
-              </h3>
-              <p className="text-[11px] text-text-sub mt-1 leading-relaxed">
-                {t === 'veg' ? '從日常餐桌開始，減碳又健康' : 
-                 t === 'plastic' ? '減少一次性塑膠，守護海洋' : 
-                 '蔬食 × 淨塑，雙倍影響力'}
-              </p>
-            </div>
-            {tempTrack === t && (
-              <motion.div 
-                initial={{ scale: 0 }} 
-                animate={{ scale: 1 }}
-                className={cn(
-                  "text-2xl",
-                  t === 'veg' ? "text-green-main" : t === 'plastic' ? "text-blue-main" : "text-text-main"
-                )}
-              >
-                <CheckCircle2 className="w-6 h-6 fill-current text-white stroke-[3] stroke-current" />
-              </motion.div>
-            )}
-          </motion.div>
-        ))}
+              <div className="flex-1">
+                <h3 className="font-black text-lg text-text-main flex items-center gap-1.5">
+                  {t === 'veg' ? '蔬食任務' : t === 'plastic' ? '淨塑任務' : '雙軌挑戰'}
+                  {isLocked && <span className="text-[10px] font-black text-red-500 bg-red-50 border border-red-200/50 px-2 py-0.5 rounded-lg flex items-center gap-0.5">未解鎖 🔒</span>}
+                </h3>
+                <p className="text-[11px] text-text-sub mt-1 leading-relaxed font-semibold">
+                  {isLocked ? '需蔬食或淨塑挑戰達到 Lv.3 解鎖' : 
+                   t === 'veg' ? '從日常餐桌開始，減碳又健康' : 
+                   t === 'plastic' ? '減少一次性塑膠，守護海洋' : 
+                   '蔬食 × 淨塑，融合高難度挑戰'}
+                </p>
+              </div>
+              {!isLocked && tempTrack === t && (
+                <motion.div 
+                  initial={{ scale: 0 }} 
+                  animate={{ scale: 1 }}
+                  className={cn(
+                    "text-2xl",
+                    t === 'veg' ? "text-green-main" : t === 'plastic' ? "text-blue-main" : "text-text-main"
+                  )}
+                >
+                  <CheckCircle2 className="w-6 h-6 fill-current text-white stroke-[3] stroke-current" />
+                </motion.div>
+              )}
+            </motion.div>
+          );
+        })}
       </div>
 
       <div className="bg-gray-line/50 p-4 rounded-xl flex gap-3 mb-8">
@@ -974,6 +1003,7 @@ export default function App() {
           level: state.level, // The level they just completed
           text: checkinText,
           imageUrl,
+          checklistItems: checkinSelectedOptions,
           timestamp: serverTimestamp(),
           expGained: amount + (mapUp ? 50 : 0),
           likes: 0
@@ -996,6 +1026,7 @@ export default function App() {
         setCheckinText('');
         setCheckinSelectedFile(null);
         setCheckinPreviewUrl(null);
+        setCheckinSelectedOptions([]);
 
         // 4. Trigger UI
         const nextRankLv = calculateLevel(newExp, LEVELS_EXP_REQ);
@@ -1096,6 +1127,52 @@ export default function App() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
+          {task.checklist && task.checklist.length > 0 && (
+            <div className="mb-6 bg-white border border-gray-line p-5 rounded-3xl shadow-soft">
+              <label className="block text-xs font-black text-text-sub uppercase tracking-wider mb-3">
+                📋 關卡實踐項目（請勾選至少一項）
+              </label>
+              <div className="space-y-3">
+                {task.checklist.map((item, idx) => {
+                  const isChecked = checkinSelectedOptions.includes(item);
+                  return (
+                    <div 
+                      key={idx} 
+                      onClick={() => {
+                        if (isChecked) {
+                          setCheckinSelectedOptions(checkinSelectedOptions.filter(o => o !== item));
+                        } else {
+                          setCheckinSelectedOptions([...checkinSelectedOptions, item]);
+                        }
+                      }}
+                      className={cn(
+                        "flex items-center gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all",
+                        isChecked 
+                          ? "bg-gradient-to-r from-green-light/20 to-blue-light/20 border-text-main shadow-inner" 
+                          : "border-gray-line bg-gray-50/50 hover:bg-gray-50"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
+                        isChecked 
+                          ? "bg-text-main border-text-main text-white" 
+                          : "border-gray-lock/40 bg-white"
+                      )}>
+                        {isChecked && <Check className="w-3.5 h-3.5 stroke-[4]" />}
+                      </div>
+                      <span className={cn(
+                        "text-[13px] font-black leading-tight select-none",
+                        isChecked ? "text-text-main" : "text-text-sub"
+                      )}>
+                        {item}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="mb-6">
             <label className="block text-sm font-black text-text-main mb-3">今天做了什麼？有什麼感受？</label>
             <textarea 
@@ -1140,10 +1217,12 @@ export default function App() {
           <div className="mt-auto">
             <button 
               type="submit" 
-              disabled={checkinIsUploading}
+              disabled={checkinIsUploading || (task.checklist && task.checklist.length > 0 && checkinSelectedOptions.length === 0)}
               className={cn(
                 "w-full text-white font-black py-5 rounded-2xl btn-active shadow-float text-lg mb-8 transition-all flex items-center justify-center gap-2",
-                checkinIsUploading ? "bg-gray-lock cursor-not-allowed" : "bg-text-main"
+                (checkinIsUploading || (task.checklist && task.checklist.length > 0 && checkinSelectedOptions.length === 0))
+                  ? "bg-gray-lock cursor-not-allowed opacity-60 shadow-none" 
+                  : "bg-text-main"
               )}
             >
               {checkinIsUploading ? (
@@ -1151,6 +1230,8 @@ export default function App() {
                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
                   上傳中...
                 </>
+              ) : (task.checklist && task.checklist.length > 0 && checkinSelectedOptions.length === 0) ? (
+                "請先勾選上方實踐項目 📋"
               ) : "送出打卡，獲得經驗值！"}
             </button>
           </div>
@@ -1224,9 +1305,26 @@ export default function App() {
                 )}
               </div>
             </div>
-            <p className="text-[14px] text-text-main mb-5 leading-relaxed font-medium">
+            <p className="text-[14px] text-text-main mb-4 leading-relaxed font-medium">
               {post.text}
             </p>
+            {post.checklistItems && post.checklistItems.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {post.checklistItems.map((item: string, i: number) => (
+                  <span 
+                    key={i} 
+                    className={cn(
+                      "text-[10px] font-black px-2.5 py-1 rounded-lg border flex items-center gap-1",
+                      post.track === 'veg' ? 'bg-green-light/40 text-green-main border-green-main/10' :
+                      post.track === 'plastic' ? 'bg-blue-light/40 text-blue-main border-blue-main/10' :
+                      'bg-orange-50 text-[#b06800] border-orange-200'
+                    )}
+                  >
+                    <span>✅</span> {item}
+                  </span>
+                ))}
+              </div>
+            )}
             {post.imageUrl && (
               <div className="mb-5 rounded-2xl overflow-hidden shadow-sm border border-gray-line/30">
                 <img src={post.imageUrl} className="w-full h-auto object-cover max-h-60" alt="Post" />
@@ -1909,6 +2007,98 @@ export default function App() {
                 回到徽章牆
               </button>
             </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Interactive Onboarding Tutorial Overlay */}
+      <AnimatePresence>
+        {tutorialStep !== null && (
+          <div className="absolute inset-0 bg-black/65 backdrop-blur-[2px] z-[150] flex flex-col justify-end p-6 select-none">
+            {/* Spotlight and tooltip container */}
+            <div className="flex-1 flex flex-col justify-center items-center">
+              {tutorialStep === 1 && (
+                <motion.div 
+                  initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.9, opacity: 0, y: -20 }}
+                  className="bg-white rounded-[36px] p-7 shadow-2xl border-4 border-green-main/30 max-w-xs text-center relative"
+                >
+                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-float rotate-6">🏆</div>
+                  <h4 className="font-black text-text-main text-lg mb-2.5 mt-2">1. 全局等級系統</h4>
+                  <p className="text-[12px] text-text-sub font-semibold leading-relaxed mb-5">
+                    不論你挑戰蔬食、減塑或雙軌，獲得的經驗值（EXP）都會累積在這裡！只要將各個軌道都挑戰成功，累積足夠的 EXP，就能解鎖最高榮譽【永續守護神】！
+                  </p>
+                  <div className="w-full h-1.5 bg-gray-line rounded-full overflow-hidden mb-6">
+                    <div className="w-1/3 h-full bg-green-main" />
+                  </div>
+                  <button 
+                    onClick={() => setTutorialStep(2)} 
+                    className="w-full bg-text-main text-white font-black py-4 rounded-2xl text-xs btn-active flex items-center justify-center gap-1.5 shadow-md"
+                  >
+                    下一步 <ChevronRight className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              )}
+
+              {tutorialStep === 2 && (
+                <motion.div 
+                  initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.9, opacity: 0, y: -20 }}
+                  className="bg-white rounded-[36px] p-7 shadow-2xl border-4 border-blue-main/30 max-w-xs text-center relative"
+                >
+                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-float -rotate-6">🎯</div>
+                  <h4 className="font-black text-text-main text-lg mb-2.5 mt-2">2. 首頁主線任務</h4>
+                  <p className="text-[12px] text-text-sub font-semibold leading-relaxed mb-6">
+                    首頁會顯示你當前的挑戰關卡。點擊「前往挑戰地圖」即可查看你的探險地圖，展開每天的綠色打卡！
+                  </p>
+                  <button 
+                    onClick={() => setTutorialStep(3)} 
+                    className="w-full bg-text-main text-white font-black py-4 rounded-2xl text-xs btn-active flex items-center justify-center gap-1.5 shadow-md"
+                  >
+                    下一步 <ChevronRight className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              )}
+
+              {tutorialStep === 3 && (
+                <motion.div 
+                  initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.9, opacity: 0, y: -20 }}
+                  className="bg-white rounded-[36px] p-7 shadow-2xl border-4 border-[#FF9F1C]/30 max-w-xs text-center relative"
+                >
+                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-float rotate-12">🗺️</div>
+                  <h4 className="font-black text-text-main text-lg mb-2.5 mt-2">3. 隨時切換挑戰軌道</h4>
+                  <p className="text-[12px] text-text-sub font-semibold leading-relaxed mb-6">
+                    你可以隨時前往「我的」個人頁面，點擊「切換挑戰軌道」來嘗試別的路線。你已解鎖的徽章進度與總 EXP 都會被完美保留喔！
+                  </p>
+                  <button 
+                    onClick={async () => {
+                      setTutorialStep(null);
+                      await updateFirebaseState({ hasCompletedTutorial: true });
+                    }} 
+                    className="w-full bg-green-main text-white font-black py-4 rounded-2xl text-xs btn-active flex items-center justify-center gap-1 shadow-md shadow-green-200"
+                  >
+                    太棒了，開始挑戰！ 🎉
+                  </button>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Skip button at the very bottom */}
+            <div className="flex justify-center pb-8">
+              <button 
+                onClick={async () => {
+                  setTutorialStep(null);
+                  await updateFirebaseState({ hasCompletedTutorial: true });
+                }} 
+                className="text-white/60 hover:text-white font-black text-xs underline underline-offset-4 tracking-widest uppercase transition-colors"
+              >
+                跳過教學 Skip Tutorial
+              </button>
+            </div>
           </div>
         )}
       </AnimatePresence>

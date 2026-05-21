@@ -7,6 +7,7 @@ export interface Task {
   fullDesc: string;
   icon: string;
   placeholder?: string;
+  checklist?: string[];
 }
 
 export interface TrackData {
@@ -40,6 +41,7 @@ export interface AppState {
   badgeUnlockDates: Record<string, string>;
   claimedRewards: string[];
   lastCheckInDate: string | null;
+  hasCompletedTutorial?: boolean;
   uid?: string;
   createdAt?: any;
   updatedAt?: any;

@@ -15,6 +15,7 @@ const defaultState: AppState = {
   badgeUnlockDates: {},
   claimedRewards: [],
   lastCheckInDate: null,
+  hasCompletedTutorial: false,
 };
 
 export function useGameState() {
