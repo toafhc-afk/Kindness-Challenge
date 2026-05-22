@@ -370,7 +370,7 @@ export default function App() {
           src={iconStr} 
           className={cn(
             "object-contain w-full h-full",
-            isBig ? "p-0.5" : "p-1"
+            isBig ? "p-0" : "p-1"
           )} 
           alt={name} 
         />
@@ -1984,10 +1984,15 @@ export default function App() {
               </button>
               
               <div className={cn(
-                "w-36 h-36 mx-auto rounded-full flex items-center justify-center mb-6 shadow-inner overflow-hidden",
-                state.unlockedBadges.includes(selectedBadge.id) ? "bg-gradient-to-br from-[#FFF0E5] to-[#FFD166] shadow-float border-4 border-white animate-bounce-slow" : "bg-gray-line/50 filter grayscale opacity-40 border-4 border-transparent"
+                "w-48 h-48 mx-auto flex items-center justify-center mb-6 relative",
+                state.unlockedBadges.includes(selectedBadge.id) ? "animate-bounce-slow" : "filter grayscale opacity-30"
               )}>
-                {renderBadgeIcon(selectedBadge.largeIcon || selectedBadge.icon, selectedBadge.name, true)}
+                {state.unlockedBadges.includes(selectedBadge.id) && (
+                  <div className="absolute inset-4 rounded-full bg-gradient-to-br from-[#FFF0E5]/60 to-[#FFD166]/40 blur-xl opacity-60 pointer-events-none" />
+                )}
+                <div className="w-44 h-44 flex items-center justify-center z-10 relative">
+                  {renderBadgeIcon(selectedBadge.largeIcon || selectedBadge.icon, selectedBadge.name, true)}
+                </div>
               </div>
               
               <h2 className="text-2xl font-black text-text-main mb-2 tracking-tight">{selectedBadge.name}</h2>
@@ -2041,9 +2046,12 @@ export default function App() {
             >
               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#FF9F1C] to-[#FFD166]" />
               
-              <div className="w-40 h-40 mx-auto rounded-full bg-gradient-to-br from-[#FFF0E5] to-[#FFD166] flex items-center justify-center mb-8 shadow-float border-8 border-white relative pulse-glow overflow-hidden">
-                {renderBadgeIcon(newUnlockedBadges[0].largeIcon || newUnlockedBadges[0].icon, newUnlockedBadges[0].name, true)}
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 }} className="absolute bottom-0 right-0 bg-white rounded-full p-2.5 shadow-sm z-20">
+              <div className="w-48 h-48 mx-auto flex items-center justify-center mb-8 relative">
+                <div className="absolute inset-4 rounded-full bg-gradient-to-br from-[#FFF0E5]/60 to-[#FFD166]/45 blur-xl animate-pulse pointer-events-none" />
+                <div className="w-44 h-44 flex items-center justify-center z-10 relative">
+                  {renderBadgeIcon(newUnlockedBadges[0].largeIcon || newUnlockedBadges[0].icon, newUnlockedBadges[0].name, true)}
+                </div>
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 }} className="absolute bottom-2 right-2 bg-white rounded-full p-2.5 shadow-float border-2 border-gray-line z-20">
                   <Star className="w-9 h-9 fill-[#FF9F1C] text-[#FF9F1C]" />
                 </motion.div>
               </div>
