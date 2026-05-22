@@ -370,7 +370,7 @@ export default function App() {
           src={iconStr} 
           className={cn(
             "object-contain w-full h-full",
-            isBig ? "p-3" : "p-1.5"
+            isBig ? "p-0.5" : "p-1"
           )} 
           alt={name} 
         />
@@ -1984,8 +1984,8 @@ export default function App() {
               </button>
               
               <div className={cn(
-                "w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 shadow-inner overflow-hidden",
-                state.unlockedBadges.includes(selectedBadge.id) ? "bg-gradient-to-br from-[#FFF0E5] to-[#FFD166] shadow-float border-4 border-white" : "bg-gray-line/50 filter grayscale opacity-40 border-4 border-transparent"
+                "w-36 h-36 mx-auto rounded-full flex items-center justify-center mb-6 shadow-inner overflow-hidden",
+                state.unlockedBadges.includes(selectedBadge.id) ? "bg-gradient-to-br from-[#FFF0E5] to-[#FFD166] shadow-float border-4 border-white animate-bounce-slow" : "bg-gray-line/50 filter grayscale opacity-40 border-4 border-transparent"
               )}>
                 {renderBadgeIcon(selectedBadge.largeIcon || selectedBadge.icon, selectedBadge.name, true)}
               </div>
@@ -2041,10 +2041,10 @@ export default function App() {
             >
               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#FF9F1C] to-[#FFD166]" />
               
-              <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-[#FFF0E5] to-[#FFD166] flex items-center justify-center mb-8 shadow-float border-8 border-white relative pulse-glow overflow-hidden">
+              <div className="w-40 h-40 mx-auto rounded-full bg-gradient-to-br from-[#FFF0E5] to-[#FFD166] flex items-center justify-center mb-8 shadow-float border-8 border-white relative pulse-glow overflow-hidden">
                 {renderBadgeIcon(newUnlockedBadges[0].largeIcon || newUnlockedBadges[0].icon, newUnlockedBadges[0].name, true)}
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 }} className="absolute -bottom-2 -right-2 bg-white rounded-full p-2 shadow-sm z-20">
-                  <Star className="w-8 h-8 fill-[#FF9F1C] text-[#FF9F1C]" />
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 }} className="absolute bottom-0 right-0 bg-white rounded-full p-2.5 shadow-sm z-20">
+                  <Star className="w-9 h-9 fill-[#FF9F1C] text-[#FF9F1C]" />
                 </motion.div>
               </div>
 

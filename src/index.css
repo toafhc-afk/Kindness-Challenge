@@ -59,3 +59,17 @@
 .pulse-glow        { animation: pulse-glow        2s infinite; }
 .pulse-glow-blue   { animation: pulse-glow-blue   2s infinite; }
 .pulse-glow-yellow { animation: pulse-glow-yellow 2s infinite; }
+
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(-4%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+.animate-bounce-slow {
+  animation: bounce-slow 3s infinite;
+}
