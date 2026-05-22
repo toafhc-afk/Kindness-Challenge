@@ -40,6 +40,9 @@ import { doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp, ge
 import { TRACK_DATA, LEVELS_EXP_REQ, TITLES, TITLES_BY_TRACK, BADGES } from './constants';
 import { View, Track, Task, AppState, Badge } from './types';
 import { cn, calculateLevel, getLevelForTrack } from './lib/utils';
+import { generateCertificate } from './lib/certificate';
+import { playSound } from './lib/sound';
+
 
 enum OperationType {
   CREATE = 'create',
@@ -91,9 +94,11 @@ export default function App() {
   const [isMapLeveledUp, setIsMapLeveledUp] = useState(false);
   const [isRankLeveledUp, setIsRankLeveledUp] = useState(false);
   const [globalFeed, setGlobalFeed] = useState<any[]>([]);
+  const [feedLimit, setFeedLimit] = useState(10);
   const [newUnlockedBadges, setNewUnlockedBadges] = useState<Badge[]>([]);
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
   const [showRewardModal, setShowRewardModal] = useState<Track | null>(null);
+  const [certificateImageUrl, setCertificateImageUrl] = useState<string | null>(null);
 
   const lastScrollY = React.useRef(0);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
@@ -234,7 +239,7 @@ export default function App() {
       setGlobalFeed([]);
       return;
     }
-    const q = query(collection(db, 'checkins'), orderBy('timestamp', 'desc'), limit(10));
+    const q = query(collection(db, 'checkins'), orderBy('timestamp', 'desc'), limit(feedLimit));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const feed = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setGlobalFeed(feed);
@@ -246,7 +251,23 @@ export default function App() {
       handleFirestoreError(error, OperationType.GET, 'checkins');
     });
     return unsubscribe;
-  }, [user]);
+  }, [user, feedLimit]);
+
+  // Generate certificate image when showRewardModal is open
+  useEffect(() => {
+    if (showRewardModal) {
+      setCertificateImageUrl(null);
+      const dateStr = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
+      const nameStr = user?.displayName || (user?.isAnonymous ? '訪客探險家' : '匿名探險家');
+      generateCertificate(showRewardModal, nameStr, dateStr)
+        .then(url => {
+          setCertificateImageUrl(url);
+        })
+        .catch(err => {
+          console.error('Error generating certificate image:', err);
+        });
+    }
+  }, [showRewardModal, user]);
 
   const defaultState: AppState = {
     hasSeenPreview: false,
@@ -299,6 +320,7 @@ export default function App() {
   };
 
   const handleNav = (target: View) => {
+    playSound('click');
     if (!state.track && !['preview', 'select', 'profile'].includes(target)) {
       setCurrentView('select');
       return;
@@ -774,8 +796,74 @@ export default function App() {
       else progressPercent = 90;
     }
 
+    const renderMapDecorations = () => {
+      if (track === 'veg') {
+        return (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30 select-none z-0">
+            {/* Field dots grid */}
+            <div className="absolute inset-0 opacity-15" style={{
+              backgroundImage: 'radial-gradient(#4A9166 1.5px, transparent 1.5px)',
+              backgroundSize: '24px 24px'
+            }} />
+            {/* Plants, Leaves & Trees scattered around the margins */}
+            <span className="absolute top-[8%] left-[8%] text-3xl animate-bounce-slow" style={{ animationDelay: '0.1s' }}>🌱</span>
+            <span className="absolute top-[25%] right-[10%] text-4xl hover:scale-110 transition-transform">🌳</span>
+            <span className="absolute top-[48%] left-[6%] text-3xl">🌼</span>
+            <span className="absolute top-[68%] right-[8%] text-4xl">🌾</span>
+            <span className="absolute top-[82%] left-[12%] text-3xl">🥦</span>
+            <span className="absolute top-[92%] right-[12%] text-3xl">🦋</span>
+            {/* Background glowing paint */}
+            <div className="absolute top-[15%] right-[-20%] w-72 h-72 rounded-full bg-green-light blur-3xl opacity-50" />
+            <div className="absolute bottom-[25%] left-[-20%] w-72 h-72 rounded-full bg-yellow-light blur-3xl opacity-40" />
+          </div>
+        );
+      }
+      if (track === 'plastic') {
+        return (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-35 select-none z-0">
+            {/* Sea wave dots grid */}
+            <div className="absolute inset-0 opacity-15" style={{
+              backgroundImage: 'radial-gradient(#3C91E6 1.5px, transparent 1.5px)',
+              backgroundSize: '24px 24px'
+            }} />
+            {/* Sea elements */}
+            <span className="absolute top-[6%] right-[8%] text-3xl animate-bounce-slow" style={{ animationDelay: '0.3s' }}>🐳</span>
+            <span className="absolute top-[22%] left-[10%] text-3xl">🌊</span>
+            <span className="absolute top-[42%] right-[12%] text-4xl">🏝️</span>
+            <span className="absolute top-[62%] left-[6%] text-3xl">🐠</span>
+            <span className="absolute top-[78%] right-[10%] text-3xl">🐚</span>
+            <span className="absolute top-[90%] left-[10%] text-4xl">🐬</span>
+            {/* Background glowing paint */}
+            <div className="absolute top-[20%] left-[-20%] w-72 h-72 rounded-full bg-blue-light blur-3xl opacity-60" />
+            <div className="absolute bottom-[30%] right-[-20%] w-72 h-72 rounded-full bg-cyan-100 blur-3xl opacity-55" />
+          </div>
+        );
+      }
+      // Dual track
+      return (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-35 select-none z-0">
+          {/* Adventure map grid */}
+          <div className="absolute inset-0 opacity-15" style={{
+            backgroundImage: 'radial-gradient(#FF9F1C 1.5px, transparent 1.5px)',
+            backgroundSize: '24px 24px'
+          }} />
+          {/* Dual elements */}
+          <span className="absolute top-[8%] left-[10%] text-3xl animate-bounce-slow" style={{ animationDelay: '0.2s' }}>🌍</span>
+          <span className="absolute top-[24%] right-[8%] text-3xl">✨</span>
+          <span className="absolute top-[44%] left-[12%] text-4xl">⛰️</span>
+          <span className="absolute top-[62%] right-[10%] text-3xl">⛵</span>
+          <span className="absolute top-[80%] left-[8%] text-3xl">🌟</span>
+          <span className="absolute top-[92%] right-[14%] text-3xl">🌈</span>
+          {/* Background glowing paint */}
+          <div className="absolute top-[20%] right-[-20%] w-72 h-72 rounded-full bg-[#FFF0D0] blur-3xl opacity-65" />
+          <div className="absolute bottom-[25%] left-[-20%] w-72 h-72 rounded-full bg-blue-100/50 blur-3xl opacity-50" />
+        </div>
+      );
+    };
+
     return (
       <div className="flex flex-col min-h-full relative" style={{ backgroundColor: data.bg }}>
+        {renderMapDecorations()}
         <div className="sticky top-0 z-20 px-6 py-6 bg-white/80 backdrop-blur-xl border-b border-gray-line/50 flex items-center justify-between">
           <h2 className="text-xl font-black text-text-main tracking-tight">
             {track === 'veg' ? '田園闖關地圖' : track === 'plastic' ? '海岸淨塑地圖' : '雙軌冒險地圖'}
@@ -810,6 +898,7 @@ export default function App() {
                   idx % 2 === 0 ? "justify-start pl-[5%]" : "justify-end pr-[5%]"
                 )}
                 onClick={() => {
+                  playSound('click');
                   setSelectedMapTaskIndex(idx);
                 }}
               >
@@ -1111,6 +1200,14 @@ export default function App() {
         const nextRankLv = calculateLevel(newExp, LEVELS_EXP_REQ);
         setIsRankLeveledUp(oldRankLv < nextRankLv);
         setIsMapLeveledUp(mapUp);
+        
+        if (oldRankLv < nextRankLv || mapUp) {
+          playSound('levelup');
+        } else if (newlyUnlocked.length > 0) {
+          playSound('unlock');
+        } else {
+          playSound('success');
+        }
         
         if (newlyUnlocked.length > 0) {
           setNewUnlockedBadges(newlyUnlocked);
@@ -1561,6 +1658,19 @@ export default function App() {
             )}
           </motion.div>
         ))}
+        {globalFeed.length >= feedLimit && (
+          <div className="flex justify-center pt-2 pb-6">
+            <button 
+              onClick={() => {
+                playSound('click');
+                setFeedLimit(prev => prev + 10);
+              }}
+              className="bg-white border border-gray-line text-text-sub hover:text-text-main font-black text-xs px-6 py-3 rounded-2xl shadow-sm hover:shadow transition-all duration-300 btn-active flex items-center gap-1.5"
+            >
+              🔄 載入更多動態
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2133,85 +2243,60 @@ export default function App() {
               initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.85, opacity: 0 }}
-              className="bg-gradient-to-br from-[#FFFDF9] to-[#F7F2E8] w-full max-w-[340px] rounded-[32px] p-6 shadow-2xl relative border-8 border-double border-[#FFD166]/50 flex flex-col items-center text-center overflow-hidden"
+              className="bg-white w-full max-w-[340px] rounded-[32px] p-5 shadow-2xl relative border border-gray-line/50 flex flex-col items-center text-center overflow-hidden"
             >
-              {/* Gold Ribbon Corner Decoration */}
-              <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none overflow-hidden">
-                <div className="absolute top-3 right-[-24px] w-24 bg-[#FF9F1C] text-white text-[8px] font-black py-0.5 rotate-45 uppercase tracking-widest text-center shadow-sm">
-                  OFFICIAL
-                </div>
-              </div>
-
-              {/* Certificate Header */}
-              <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#FFF0E5] to-[#FFD166]/30 flex items-center justify-center text-4xl mb-4 border-2 border-white shadow-md relative">
-                🏅
-              </div>
-
-              <h2 className="text-xl font-black text-text-main tracking-tight font-serif mb-1">
-                永續大挑戰 榮譽證書
-              </h2>
-              <div className="text-[10px] font-black text-text-sub uppercase tracking-[0.2em] mb-4">
-                CERTIFICATE OF HONOR
-              </div>
-
-              {/* Recipient */}
-              <div className="w-full h-[1px] bg-gray-line/50 mb-3" />
-              <div className="text-[11px] font-bold text-text-sub/70 mb-1">頒發給探險家</div>
-              <div className="text-lg font-black text-text-main border-b-2 border-text-main/20 px-4 pb-1 mb-3 inline-block tracking-wide">
-                {user?.displayName || "訪客探險家"}
-              </div>
-
-              {/* Description */}
-              <p className="text-[11px] text-text-sub font-semibold leading-relaxed mb-5 px-1">
-                {showRewardModal === 'dual' ? (
-                  <>
-                    恭喜完成最高難度的 <strong>【雙軌挑戰】</strong> 任務！您已成功集滿所有軌道的徽章（蔬食、減塑、雙軌整合），在日常生活中實踐永續行動，展現無比的毅力與愛心，特頒此證，以茲表揚其為守護地球做出的卓越貢獻！
-                  </>
-                ) : showRewardModal === 'veg' ? (
-                  <>
-                    恭喜完成 <strong>【蔬食行動】</strong> 任務！您已成功解鎖所有蔬食關卡，為地球減少碳排放做出實際行動，特頒此證，以茲表揚其優異表現！
-                  </>
-                ) : (
-                  <>
-                    恭喜完成 <strong>【減塑行動】</strong> 任務！您已成功解鎖所有減塑關卡，為保護海洋與生態做出實際行動，特頒此證，以茲表揚其優異表現！
-                  </>
-                )}
-              </p>
-
-              {/* Seals & Signatures */}
-              <div className="w-full flex justify-between items-center text-[10px] text-text-sub/70 font-bold mb-6 px-2">
-                <div className="flex flex-col items-center">
-                  <div className="h-6 flex items-end mb-1 border-b border-text-sub/20 w-16 pb-0.5 font-serif italic text-text-main/80 text-[8px]">
-                    toafhc team
-                  </div>
-                  <span>慈心大挑戰小組</span>
-                </div>
-                <div className="relative">
-                  {/* Decorative stamp circle */}
-                  <div className="absolute inset-0 m-auto -translate-y-2 w-10 h-10 border-2 border-red-500/30 rounded-full flex items-center justify-center text-[8px] text-red-500/40 font-black rotate-12 pointer-events-none uppercase tracking-tighter">
-                    Approved
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <div className="h-6 flex items-end mb-1 border-b border-text-sub/20 w-20 pb-0.5 font-mono text-[8px] text-text-main/80">
-                      {new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' })}
-                    </div>
-                    <span>頒發日期</span>
+              {certificateImageUrl ? (
+                <div className="w-full relative rounded-2xl overflow-hidden border border-gray-line/30 shadow-inner mb-4">
+                  <img 
+                    src={certificateImageUrl} 
+                    alt="電子證書" 
+                    className="w-full h-auto object-contain select-none"
+                  />
+                  <div className="absolute top-2 right-2 bg-text-main/80 backdrop-blur-sm text-white text-[9px] font-black px-2.5 py-1 rounded-lg shadow-sm">
+                    📱 長按儲存圖片
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="w-full h-[360px] flex flex-col items-center justify-center gap-4 mb-4 bg-gray-line/20 rounded-2xl">
+                  <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+                    className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full"
+                  />
+                  <p className="text-xs text-text-sub font-black">正在為您製作專屬證書...</p>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="w-full flex flex-col gap-2">
                 <button 
                   onClick={() => {
-                    alert('💡 提示：長按螢幕即可儲存證書畫面喔！');
+                    playSound('click');
+                    if (certificateImageUrl) {
+                      const link = document.createElement('a');
+                      link.href = certificateImageUrl;
+                      link.download = `慈心大挑戰_${
+                        showRewardModal === 'veg' ? '蔬食守護者' : 
+                        showRewardModal === 'plastic' ? '淨塑守護者' : 
+                        '地球友善勇士'
+                      }_證書.png`;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      alert('🎉 開始下載您的榮譽證書！\n如果手機瀏覽器未自動下載，您也可以直接「長按證書圖片」來儲存它喔！');
+                    } else {
+                      alert('💡 證書還在製作中，請稍候再試！');
+                    }
                   }}
                   className="w-full bg-[#FFD166] text-text-main font-black py-3 rounded-2xl text-xs btn-active flex items-center justify-center gap-1.5 shadow-md shadow-orange-200 border-b-4 border-orange-300"
                 >
                   <Download className="w-3.5 h-3.5" /> 儲存證書至手機
                 </button>
                 <button 
-                  onClick={() => setShowRewardModal(null)}
+                  onClick={() => {
+                    playSound('click');
+                    setShowRewardModal(null);
+                  }}
                   className="w-full py-2.5 rounded-xl border border-gray-line text-xs text-text-sub font-black hover:bg-gray-50 transition-colors btn-active"
                 >
                   關閉證書
