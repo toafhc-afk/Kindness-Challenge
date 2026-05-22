@@ -1769,8 +1769,8 @@ export default function App() {
                         className="flex flex-col items-center text-center group cursor-pointer"
                       >
                         <div className={cn(
-                          "w-14 h-14 rounded-full mb-2 flex items-center justify-center transition-all duration-500 overflow-hidden",
-                          isUnlocked ? `bg-gradient-to-br ${trackInfo.color} shadow-float border-2 ${trackInfo.border}` : "bg-gray-line/50 text-gray-lock filter grayscale opacity-40 scale-90 border-2 border-transparent"
+                          "w-18 h-18 mb-2 flex items-center justify-center transition-all duration-500",
+                          isUnlocked ? "filter drop-shadow-md" : "filter grayscale opacity-30 scale-90"
                         )}>
                           {renderBadgeIcon(badge.icon, badge.name)}
                         </div>
@@ -1797,19 +1797,16 @@ export default function App() {
                         className="flex flex-col items-center text-center cursor-pointer relative"
                       >
                         <div className={cn(
-                          "w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 z-10 overflow-hidden relative",
-                          isUnlocked ? `bg-gradient-to-br ${trackInfo.color} shadow-[0_10px_25px_rgba(0,0,0,0.1)] border-4 border-white` : "bg-gray-line/30 text-gray-lock filter grayscale opacity-40 scale-90 border-4 border-transparent"
+                          "w-28 h-28 flex items-center justify-center transition-all duration-500 z-10 relative",
+                          isUnlocked ? "filter drop-shadow-lg" : "filter grayscale opacity-30 scale-90"
                         )}>
                           {renderBadgeIcon(badge.icon, badge.name, true)}
                           {!isUnlocked && (
-                             <div className="absolute inset-0 flex items-center justify-center bg-black/5 rounded-full backdrop-blur-[1px]">
-                               <Lock className="w-6 h-6 text-gray-lock" />
+                             <div className="absolute inset-0 flex items-center justify-center">
+                               <Lock className="w-7 h-7 text-gray-lock/80 drop-shadow-sm" />
                              </div>
                           )}
                         </div>
-                        {isUnlocked && (
-                          <div className="absolute inset-0 bg-white/20 rounded-full animate-ping opacity-20" />
-                        )}
                         <div className="mt-3 bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-line/30 z-20">
                           <span className={cn(
                             "text-xs font-black tracking-widest",
@@ -2006,8 +2003,19 @@ export default function App() {
               </p>
               
               {state.unlockedBadges.includes(selectedBadge.id) ? (
-                <div className="text-[10px] font-black text-green-main tracking-widest uppercase bg-green-light/50 py-3 rounded-2xl border border-green-main/20">
-                  已於 {state.badgeUnlockDates[selectedBadge.id] ? new Date(state.badgeUnlockDates[selectedBadge.id]).toLocaleDateString() : '未知時間'} 達成
+                <div className="space-y-4">
+                  <div className="text-[10px] font-black text-green-main tracking-widest uppercase bg-green-light/50 py-3 rounded-2xl border border-green-main/20">
+                    已於 {state.badgeUnlockDates[selectedBadge.id] ? new Date(state.badgeUnlockDates[selectedBadge.id]).toLocaleDateString() : '未知時間'} 達成
+                  </div>
+                  {(selectedBadge.largeIcon || selectedBadge.icon).includes('.') && (
+                    <a
+                      href={selectedBadge.largeIcon || selectedBadge.icon}
+                      download={`${selectedBadge.name}.png`}
+                      className="w-full bg-green-main text-white font-black py-4 rounded-2xl btn-active shadow-float flex items-center justify-center gap-2 text-sm hover:bg-green-main/90 transition-colors"
+                    >
+                      <Download className="w-4 h-4" /> 儲存徽章到相簿
+                    </a>
+                  )}
                 </div>
               ) : (
                 <div className="text-[10px] font-black text-gray-lock tracking-widest uppercase flex items-center justify-center gap-2">
