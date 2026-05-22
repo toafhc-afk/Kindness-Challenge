@@ -143,11 +143,11 @@ export const TRACK_DATA: Record<Track, TrackData> = {
 
 export const BADGES: Badge[] = [
   // Veg Track Badges
-  { id: 'veg_1', track: 'veg', level: 1, name: '餐桌觀察家', icon: '/badges/Veg_1_Small.png', largeIcon: '/badges/Veg_1.png', desc: '開始看見飲食與環境、生命的關聯。', condition: '完成蔬食關卡一', type: 'levelBadge' },
-  { id: 'veg_2', track: 'veg', level: 2, name: '蔬食行動芽', icon: '/badges/Veg_2_Small.png', largeIcon: '/badges/Veg_2.png', desc: '完成一次蔬食選擇，善意開始發芽。', condition: '完成蔬食關卡二', type: 'levelBadge' },
-  { id: 'veg_3', track: 'veg', level: 3, name: '綠色習慣家', icon: '/badges/Veg_3_Small.png', largeIcon: '/badges/Veg_3.png', desc: '累積多次蔬食行動，讓友善變成習慣。', condition: '完成蔬食關卡三', type: 'levelBadge' },
-  { id: 'veg_4', track: 'veg', level: 4, name: '友善餐桌使者', icon: '/badges/Veg_4_Small.png', largeIcon: '/badges/Veg_4.png', desc: '願意把蔬食行動分享給身邊的人。', condition: '完成蔬食關卡四', type: 'levelBadge' },
-  { id: 'veg_complete', track: 'veg', name: '蔬食守護者', icon: '/badges/Veg_5_Small.png', largeIcon: '/badges/Veg_5.png', desc: '你用一次次餐桌上的選擇，讓友善成為日常。', condition: '集滿蔬食軌道 4 枚關卡章', type: 'completeBadge', reward: ['蔬食守護者電子證書', '蔬食食譜卡 PDF', '蔬食守護者紀念貼紙圖檔'] },
+  { id: 'veg_1', track: 'veg', level: 1, name: '餐桌觀察家', icon: 'badges/Veg_1_Small.png', largeIcon: 'badges/Veg_1.png', desc: '開始看見飲食與環境、生命的關聯。', condition: '完成蔬食關卡一', type: 'levelBadge' },
+  { id: 'veg_2', track: 'veg', level: 2, name: '蔬食行動芽', icon: 'badges/Veg_2_Small.png', largeIcon: 'badges/Veg_2.png', desc: '完成一次蔬食選擇，善意開始發芽。', condition: '完成蔬食關卡二', type: 'levelBadge' },
+  { id: 'veg_3', track: 'veg', level: 3, name: '綠色習慣家', icon: 'badges/Veg_3_Small.png', largeIcon: 'badges/Veg_3.png', desc: '累積多次蔬食行動，讓友善變成習慣。', condition: '完成蔬食關卡三', type: 'levelBadge' },
+  { id: 'veg_4', track: 'veg', level: 4, name: '友善餐桌使者', icon: 'badges/Veg_4_Small.png', largeIcon: 'badges/Veg_4.png', desc: '願意把蔬食行動分享給身邊的人。', condition: '完成蔬食關卡四', type: 'levelBadge' },
+  { id: 'veg_complete', track: 'veg', name: '蔬食守護者', icon: 'badges/Veg_5_Small.png', largeIcon: 'badges/Veg_5.png', desc: '你用一次次餐桌上的選擇，讓友善成為日常。', condition: '集滿蔬食軌道 4 枚關卡章', type: 'completeBadge', reward: ['蔬食守護者電子證書', '蔬食食譜卡 PDF', '蔬食守護者紀念貼紙圖檔'] },
 
   // Plastic Track Badges
   { id: 'plastic_1', track: 'plastic', level: 1, name: '塑膠偵查員', icon: '🔍', desc: '開始發現生活中的一次性塑膠。', condition: '完成淨塑關卡一', type: 'levelBadge' },

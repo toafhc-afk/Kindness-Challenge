@@ -364,7 +364,7 @@ export default function App() {
   // --- View Components ---
 
   const renderBadgeIcon = (iconStr: string, name: string, isBig = false) => {
-    if (iconStr.startsWith('/')) {
+    if (iconStr.includes('.') || iconStr.includes('/')) {
       return (
         <img 
           src={iconStr} 
