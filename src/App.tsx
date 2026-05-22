@@ -41,7 +41,7 @@ import { TRACK_DATA, LEVELS_EXP_REQ, TITLES, TITLES_BY_TRACK, BADGES } from './c
 import { View, Track, Task, AppState, Badge } from './types';
 import { cn, calculateLevel, getLevelForTrack } from './lib/utils';
 import { generateCertificate } from './lib/certificate';
-import { playSound } from './lib/sound';
+import { playSound, unlockAudio } from './lib/sound';
 
 
 enum OperationType {
@@ -2017,7 +2017,12 @@ export default function App() {
   };
 
   return (
-    <div id="app-container" className="max-w-[400px] mx-auto bg-white-main h-svh relative overflow-hidden flex flex-col shadow-2xl">
+    <div 
+      id="app-container" 
+      onClick={unlockAudio}
+      onTouchStart={unlockAudio}
+      className="max-w-[400px] mx-auto bg-white-main h-svh relative overflow-hidden flex flex-col shadow-2xl"
+    >
       <AnimatePresence mode="wait">
         <motion.div 
           key={currentView}
