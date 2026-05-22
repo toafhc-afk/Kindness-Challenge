@@ -23,6 +23,7 @@ export interface Badge {
   level?: number;
   name: string;
   icon: string;
+  largeIcon?: string;
   desc: string;
   condition: string;
   type: 'levelBadge' | 'completeBadge';

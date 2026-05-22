@@ -363,6 +363,22 @@ export default function App() {
 
   // --- View Components ---
 
+  const renderBadgeIcon = (iconStr: string, name: string, isBig = false) => {
+    if (iconStr.startsWith('/')) {
+      return (
+        <img 
+          src={iconStr} 
+          className={cn(
+            "object-contain w-full h-full",
+            isBig ? "p-3" : "p-1.5"
+          )} 
+          alt={name} 
+        />
+      );
+    }
+    return <span className={isBig ? "text-5xl" : "text-xl"}>{iconStr}</span>;
+  };
+
   const renderPreviewView = () => (
     <div className="px-6 py-8">
       <h1 className="text-2xl font-black text-text-main text-center mb-2 tracking-tight">永續大挑戰</h1>
@@ -1753,10 +1769,10 @@ export default function App() {
                         className="flex flex-col items-center text-center group cursor-pointer"
                       >
                         <div className={cn(
-                          "w-14 h-14 rounded-full mb-2 flex items-center justify-center text-xl transition-all duration-500",
+                          "w-14 h-14 rounded-full mb-2 flex items-center justify-center transition-all duration-500 overflow-hidden",
                           isUnlocked ? `bg-gradient-to-br ${trackInfo.color} shadow-float border-2 ${trackInfo.border}` : "bg-gray-line/50 text-gray-lock filter grayscale opacity-40 scale-90 border-2 border-transparent"
                         )}>
-                          {badge.icon}
+                          {renderBadgeIcon(badge.icon, badge.name)}
                         </div>
                         <div className={cn(
                           "text-[9px] font-black tracking-tighter leading-tight",
@@ -1781,10 +1797,10 @@ export default function App() {
                         className="flex flex-col items-center text-center cursor-pointer relative"
                       >
                         <div className={cn(
-                          "w-24 h-24 rounded-full flex items-center justify-center text-4xl transition-all duration-500 z-10",
+                          "w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 z-10 overflow-hidden relative",
                           isUnlocked ? `bg-gradient-to-br ${trackInfo.color} shadow-[0_10px_25px_rgba(0,0,0,0.1)] border-4 border-white` : "bg-gray-line/30 text-gray-lock filter grayscale opacity-40 scale-90 border-4 border-transparent"
                         )}>
-                          {badge.icon}
+                          {renderBadgeIcon(badge.icon, badge.name, true)}
                           {!isUnlocked && (
                              <div className="absolute inset-0 flex items-center justify-center bg-black/5 rounded-full backdrop-blur-[1px]">
                                <Lock className="w-6 h-6 text-gray-lock" />
@@ -1968,10 +1984,10 @@ export default function App() {
               </button>
               
               <div className={cn(
-                "w-24 h-24 mx-auto rounded-full flex items-center justify-center text-5xl mb-6 shadow-inner",
+                "w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 shadow-inner overflow-hidden",
                 state.unlockedBadges.includes(selectedBadge.id) ? "bg-gradient-to-br from-[#FFF0E5] to-[#FFD166] shadow-float border-4 border-white" : "bg-gray-line/50 filter grayscale opacity-40 border-4 border-transparent"
               )}>
-                {selectedBadge.icon}
+                {renderBadgeIcon(selectedBadge.largeIcon || selectedBadge.icon, selectedBadge.name, true)}
               </div>
               
               <h2 className="text-2xl font-black text-text-main mb-2 tracking-tight">{selectedBadge.name}</h2>
@@ -2025,9 +2041,9 @@ export default function App() {
             >
               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#FF9F1C] to-[#FFD166]" />
               
-              <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-[#FFF0E5] to-[#FFD166] flex items-center justify-center text-6xl mb-8 shadow-float border-8 border-white relative pulse-glow">
-                {newUnlockedBadges[0].icon}
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 }} className="absolute -bottom-2 -right-2 bg-white rounded-full p-2 shadow-sm">
+              <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-[#FFF0E5] to-[#FFD166] flex items-center justify-center mb-8 shadow-float border-8 border-white relative pulse-glow overflow-hidden">
+                {renderBadgeIcon(newUnlockedBadges[0].largeIcon || newUnlockedBadges[0].icon, newUnlockedBadges[0].name, true)}
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 }} className="absolute -bottom-2 -right-2 bg-white rounded-full p-2 shadow-sm z-20">
                   <Star className="w-8 h-8 fill-[#FF9F1C] text-[#FF9F1C]" />
                 </motion.div>
               </div>
