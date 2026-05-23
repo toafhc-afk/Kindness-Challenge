@@ -823,9 +823,9 @@ export default function App() {
         style={{ 
           backgroundColor: data.bg,
           backgroundImage: `url(${
-            track === 'veg' ? '/veg_map_bg.png' :
-            track === 'plastic' ? '/plastic_map_bg.png' :
-            '/dual_map_bg.png'
+            track === 'veg' ? 'veg_map_bg.png' :
+            track === 'plastic' ? 'plastic_map_bg.png' :
+            'dual_map_bg.png'
           })`,
           backgroundSize: '100% auto',
           backgroundRepeat: 'no-repeat',
