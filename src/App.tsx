@@ -842,41 +842,6 @@ export default function App() {
         </div>
         
         <div className="px-6 py-12 relative flex flex-col gap-20" style={{ paddingBottom: 'calc(9rem + env(safe-area-inset-bottom, 0px))' }}>
-          {/* Curved progress route matching the S-curves of the backgrounds */}
-          <svg 
-            className="absolute left-0 top-12 w-full h-[656px] pointer-events-none z-0 overflow-visible"
-            viewBox="0 0 100 656"
-            preserveAspectRatio="none"
-          >
-            {/* Background path (dotted/dashed route) */}
-            <path 
-              d={track === 'plastic' 
-                ? "M 74 568 C 74 488, 26 488, 26 408 C 26 328, 74 328, 74 248 C 74 168, 26 168, 26 88" 
-                : "M 26 568 C 26 488, 74 488, 74 408 C 74 328, 26 328, 26 248 C 26 168, 74 168, 74 88"
-              }
-              fill="none"
-              stroke="#D1D5DB"
-              strokeWidth="2"
-              strokeDasharray="4 4"
-              opacity="0.8"
-            />
-            {/* Animated progress overlay path */}
-            <motion.path 
-              d={track === 'plastic' 
-                ? "M 74 568 C 74 488, 26 488, 26 408 C 26 328, 74 328, 74 248 C 74 168, 26 168, 26 88" 
-                : "M 26 568 C 26 488, 74 488, 74 408 C 74 328, 26 328, 26 248 C 26 168, 74 168, 74 88"
-              }
-              fill="none"
-              stroke={data.themeColor}
-              strokeWidth="4"
-              strokeLinecap="round"
-              pathLength="100"
-              initial={{ strokeDashoffset: 100 }}
-              animate={{ strokeDashoffset: 100 - progressPercent }}
-              transition={{ duration: 1.2, ease: "easeInOut" }}
-              style={{ strokeDasharray: "100" }}
-            />
-          </svg>
 
           {tasks.slice().reverse().map((task, reverseIdx) => {
             const idx = 3 - reverseIdx;
