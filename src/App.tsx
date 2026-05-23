@@ -817,74 +817,21 @@ export default function App() {
       else progressPercent = 90;
     }
 
-    const renderMapDecorations = () => {
-      if (track === 'veg') {
-        return (
-          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30 select-none z-0">
-            {/* Field dots grid */}
-            <div className="absolute inset-0 opacity-15" style={{
-              backgroundImage: 'radial-gradient(#4A9166 1.5px, transparent 1.5px)',
-              backgroundSize: '24px 24px'
-            }} />
-            {/* Plants, Leaves & Trees scattered around the margins */}
-            <span className="absolute top-[8%] left-[8%] text-3xl animate-bounce-slow" style={{ animationDelay: '0.1s' }}>🌱</span>
-            <span className="absolute top-[25%] right-[10%] text-4xl hover:scale-110 transition-transform">🌳</span>
-            <span className="absolute top-[48%] left-[6%] text-3xl">🌼</span>
-            <span className="absolute top-[68%] right-[8%] text-4xl">🌾</span>
-            <span className="absolute top-[82%] left-[12%] text-3xl">🥦</span>
-            <span className="absolute top-[92%] right-[12%] text-3xl">🦋</span>
-            {/* Background glowing paint */}
-            <div className="absolute top-[15%] right-[-20%] w-72 h-72 rounded-full bg-green-light blur-3xl opacity-50" />
-            <div className="absolute bottom-[25%] left-[-20%] w-72 h-72 rounded-full bg-yellow-light blur-3xl opacity-40" />
-          </div>
-        );
-      }
-      if (track === 'plastic') {
-        return (
-          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-35 select-none z-0">
-            {/* Sea wave dots grid */}
-            <div className="absolute inset-0 opacity-15" style={{
-              backgroundImage: 'radial-gradient(#3C91E6 1.5px, transparent 1.5px)',
-              backgroundSize: '24px 24px'
-            }} />
-            {/* Sea elements */}
-            <span className="absolute top-[6%] right-[8%] text-3xl animate-bounce-slow" style={{ animationDelay: '0.3s' }}>🐳</span>
-            <span className="absolute top-[22%] left-[10%] text-3xl">🌊</span>
-            <span className="absolute top-[42%] right-[12%] text-4xl">🏝️</span>
-            <span className="absolute top-[62%] left-[6%] text-3xl">🐠</span>
-            <span className="absolute top-[78%] right-[10%] text-3xl">🐚</span>
-            <span className="absolute top-[90%] left-[10%] text-4xl">🐬</span>
-            {/* Background glowing paint */}
-            <div className="absolute top-[20%] left-[-20%] w-72 h-72 rounded-full bg-blue-light blur-3xl opacity-60" />
-            <div className="absolute bottom-[30%] right-[-20%] w-72 h-72 rounded-full bg-cyan-100 blur-3xl opacity-55" />
-          </div>
-        );
-      }
-      // Dual track
-      return (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-35 select-none z-0">
-          {/* Adventure map grid */}
-          <div className="absolute inset-0 opacity-15" style={{
-            backgroundImage: 'radial-gradient(#FF9F1C 1.5px, transparent 1.5px)',
-            backgroundSize: '24px 24px'
-          }} />
-          {/* Dual elements */}
-          <span className="absolute top-[8%] left-[10%] text-3xl animate-bounce-slow" style={{ animationDelay: '0.2s' }}>🌍</span>
-          <span className="absolute top-[24%] right-[8%] text-3xl">✨</span>
-          <span className="absolute top-[44%] left-[12%] text-4xl">⛰️</span>
-          <span className="absolute top-[62%] right-[10%] text-3xl">⛵</span>
-          <span className="absolute top-[80%] left-[8%] text-3xl">🌟</span>
-          <span className="absolute top-[92%] right-[14%] text-3xl">🌈</span>
-          {/* Background glowing paint */}
-          <div className="absolute top-[20%] right-[-20%] w-72 h-72 rounded-full bg-[#FFF0D0] blur-3xl opacity-65" />
-          <div className="absolute bottom-[25%] left-[-20%] w-72 h-72 rounded-full bg-blue-100/50 blur-3xl opacity-50" />
-        </div>
-      );
-    };
-
     return (
-      <div className="flex flex-col min-h-full relative" style={{ backgroundColor: data.bg }}>
-        {renderMapDecorations()}
+      <div 
+        className="flex flex-col min-h-full relative transition-all duration-300" 
+        style={{ 
+          backgroundColor: data.bg,
+          backgroundImage: `url(${
+            track === 'veg' ? '/veg_map_bg.png' :
+            track === 'plastic' ? '/plastic_map_bg.png' :
+            '/dual_map_bg.png'
+          })`,
+          backgroundSize: '100% auto',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center top'
+        }}
+      >
         <div className="sticky top-0 z-20 px-6 py-6 bg-white/80 backdrop-blur-xl border-b border-gray-line/50 flex items-center justify-between">
           <h2 className="text-xl font-black text-text-main tracking-tight">
             {track === 'veg' ? '田園闖關地圖' : track === 'plastic' ? '海岸淨塑地圖' : '雙軌冒險地圖'}
