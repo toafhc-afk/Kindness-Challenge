@@ -27,6 +27,8 @@ export const unlockAudio = () => {
   }
 };
 
+let lastPlayTime = 0;
+
 export const playSound = (type: 'click' | 'success' | 'unlock' | 'levelup') => {
   try {
     const ctx = getAudioContext();
@@ -35,6 +37,10 @@ export const playSound = (type: 'click' | 'success' | 'unlock' | 'levelup') => {
     const now = ctx.currentTime;
     
     if (type === 'click') {
+      // Debounce clicks within 50ms to prevent double triggering (from manual calls + global delegation)
+      if (Date.now() - lastPlayTime < 50) return;
+      lastPlayTime = Date.now();
+
       // Short subtle click
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();

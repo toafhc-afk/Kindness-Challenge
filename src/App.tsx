@@ -328,6 +328,27 @@ export default function App() {
     setCurrentView(target);
   };
 
+  const handleGlobalClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    unlockAudio();
+    
+    let target = e.target as HTMLElement | null;
+    while (target && target !== e.currentTarget) {
+      const tagName = target.tagName;
+      const role = target.getAttribute('role');
+      const isButton = tagName === 'BUTTON' || tagName === 'A' || role === 'button';
+      const hasPointerClass = target.classList.contains('cursor-pointer') || 
+                              target.classList.contains('btn-active') ||
+                              target.classList.contains('select-none') ||
+                              target.getAttribute('onClick') !== null;
+      
+      if (isButton || hasPointerClass) {
+        playSound('click');
+        break;
+      }
+      target = target.parentElement;
+    }
+  };
+
   const currentLevel = calculateLevel(state.exp, LEVELS_EXP_REQ);
 
   if (authLoading) {
@@ -2019,7 +2040,7 @@ export default function App() {
   return (
     <div 
       id="app-container" 
-      onClick={unlockAudio}
+      onClick={handleGlobalClick}
       onTouchStart={unlockAudio}
       className="max-w-[400px] mx-auto bg-white-main h-svh relative overflow-hidden flex flex-col shadow-2xl"
     >
