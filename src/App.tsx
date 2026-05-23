@@ -842,19 +842,15 @@ export default function App() {
         </div>
         
         <div className="px-6 py-12 relative flex flex-col gap-20" style={{ paddingBottom: 'calc(9rem + env(safe-area-inset-bottom, 0px))' }}>
-          <div className="absolute top-12 h-[640px] left-1/2 -translate-x-1/2 w-3 bg-gray-line rounded-full z-0 overflow-hidden">
-            <motion.div 
-              initial={{ height: 0 }}
-              animate={{ height: `${progressPercent}%` }}
-              style={{ backgroundColor: data.themeColor }}
-              className="absolute bottom-0 w-full transition-all duration-1000"
-            />
-          </div>
-
           {tasks.slice().reverse().map((task, reverseIdx) => {
             const idx = 3 - reverseIdx;
             const status = idx + 1 < state.level ? 'done' : idx + 1 === state.level ? 'active' : 'locked';
             const isLevel1Node = idx === 0;
+            
+            // Dynamically position node based on the S-curve paths in the uploaded backgrounds.
+            // plastic is reversed compared to veg and dual.
+            const isLeft = track === 'plastic' ? idx % 2 !== 0 : idx % 2 === 0;
+
             return (
               <motion.div 
                 key={task.id}
@@ -863,7 +859,7 @@ export default function App() {
                 viewport={{ once: true }}
                 className={cn(
                   "relative z-10 flex items-center cursor-pointer",
-                  idx % 2 === 0 ? "justify-start pl-[5%]" : "justify-end pr-[5%]"
+                  isLeft ? "justify-start pl-[16%] md:pl-[20%]" : "justify-end pr-[16%] md:pr-[20%]"
                 )}
                 onClick={() => {
                   playSound('click');
@@ -872,7 +868,7 @@ export default function App() {
               >
                 <div className={cn(
                   "flex items-center gap-6",
-                  idx % 2 === 0 ? "flex-row" : "flex-row-reverse text-right"
+                  isLeft ? "flex-row" : "flex-row-reverse text-right"
                 )}>
                   <div
                     className={cn(
