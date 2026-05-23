@@ -31,7 +31,8 @@ import {
   X,
   Gift,
   Award,
-  Download
+  Download,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from './lib/AuthContext';
 import { loginWithGoogle, loginAnonymously, googleProvider, auth, db, storage } from './lib/firebase';
@@ -99,6 +100,7 @@ export default function App() {
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
   const [showRewardModal, setShowRewardModal] = useState<Track | null>(null);
   const [certificateImageUrl, setCertificateImageUrl] = useState<string | null>(null);
+  const [showTrackSwitcherModal, setShowTrackSwitcherModal] = useState(false);
 
   const lastScrollY = React.useRef(0);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
@@ -671,6 +673,37 @@ export default function App() {
             </motion.div>
           </div>
 
+          {/* Quick Track Switcher (Senior Friendly) */}
+          <div className="mb-6 bg-white/95 backdrop-blur-md rounded-[28px] p-4.5 shadow-soft border border-gray-line/40 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "w-12 h-12 rounded-2xl flex items-center justify-center text-3xl shrink-0 shadow-inner-soft",
+                track === 'veg' ? "bg-green-light animate-pulse-slow" : track === 'plastic' ? "bg-blue-light animate-pulse-slow" : "bg-gradient-to-br from-green-light to-blue-light animate-pulse-slow"
+              )}>
+                {track === 'veg' ? '🥗' : track === 'plastic' ? '💧' : '🌍'}
+              </div>
+              <div>
+                <div className="text-[10px] font-black text-text-sub/80 uppercase tracking-widest">目前挑戰路線</div>
+                <div className="text-base font-black text-text-main leading-tight mt-0.5">
+                  {track === 'veg' ? '🌱 蔬食低碳' : track === 'plastic' ? '🌊 海岸淨塑' : '🌍 雙軌並進'}
+                </div>
+              </div>
+            </div>
+            <motion.button 
+              animate={{ scale: [1, 1.04, 1] }}
+              transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
+              onClick={() => {
+                playSound('click');
+                setShowTrackSwitcherModal(true);
+              }}
+              className="text-white hover:bg-black font-black px-4.5 py-3 rounded-2xl text-xs flex items-center gap-1.5 shadow-md btn-active shrink-0 transition-all"
+              style={{ backgroundColor: tc }}
+            >
+              <span>切換路線</span>
+              <RefreshCw className="w-3.5 h-3.5" />
+            </motion.button>
+          </div>
+
           {/* Level Card */}
           <div id="tutorial-step1-card" className="bg-white rounded-3xl p-5 shadow-float mb-8 border border-white">
             <div className="flex justify-between items-end mb-3">
@@ -784,14 +817,18 @@ export default function App() {
               <p className="text-[13px] text-text-sub mb-6 leading-relaxed font-medium">
                 {currentTaskData.desc}
               </p>
-              <button 
+              <motion.button 
+                animate={{ scale: [1, 1.02, 1] }}
+                transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
                 onClick={() => {
+                  playSound('click');
                   handleNav('map');
                 }} 
-                className="w-full bg-text-main text-white font-black py-4 rounded-2xl text-sm btn-active flex items-center justify-center gap-2"
+                className="w-full text-white font-black py-4 rounded-2xl text-sm btn-active flex items-center justify-center gap-2 shadow-md"
+                style={{ backgroundColor: tc }}
               >
                 前往挑戰地圖 <ChevronRight className="w-4 h-4" />
-              </button>
+              </motion.button>
             </motion.div>
           )}
         </div>
@@ -1280,6 +1317,7 @@ export default function App() {
                     <div 
                       key={idx} 
                       onClick={() => {
+                        playSound('click');
                         if (isChecked) {
                           setCheckinSelectedOptions(checkinSelectedOptions.filter(o => o !== item));
                         } else {
@@ -2200,6 +2238,127 @@ export default function App() {
               >
                 收下這份紀念 <Heart className="w-5 h-5 fill-current" />
               </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 2.5 Senior Friendly Quick Switch Modal */}
+      <AnimatePresence>
+        {showTrackSwitcherModal && (
+          <div className="absolute inset-0 z-[115] flex items-end justify-center">
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowTrackSwitcherModal(false)}
+              className="absolute inset-0 bg-text-main/65 backdrop-blur-sm"
+            />
+            {/* Modal Body */}
+            <motion.div 
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: 'spring', damping: 25, stiffness: 280 }}
+              className="bg-white w-full rounded-t-[40px] shadow-2xl p-6 relative border-t border-gray-line/50 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] z-10 max-h-[85vh] overflow-y-auto"
+            >
+              {/* Drag indicator */}
+              <div className="w-12 h-1.5 bg-gray-line/60 rounded-full mx-auto mb-5" />
+
+              {/* Header */}
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-xl font-black text-text-main tracking-tight flex items-center gap-2">
+                    切換挑戰路線 🔄
+                  </h3>
+                  <p className="text-xs text-text-sub font-bold mt-1">隨時切換，所有挑戰進度都會為您保留喔！</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    playSound('click');
+                    setShowTrackSwitcherModal(false);
+                  }}
+                  className="p-2 text-text-sub hover:text-text-main bg-gray-line/30 rounded-full btn-active"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Track Cards */}
+              <div className="flex flex-col gap-4 mb-4">
+                {(['veg', 'plastic', 'dual'] as Track[]).map((t) => {
+                  const isLocked = t === 'dual' && 
+                    getLevelForTrack('veg', state.unlockedBadges) < 3 && 
+                    getLevelForTrack('plastic', state.unlockedBadges) < 3;
+                    
+                  const isActive = state.track === t;
+                  const tData = TRACK_DATA[t];
+
+                  return (
+                    <motion.button
+                      key={t}
+                      disabled={isLocked}
+                      whileTap={isLocked ? {} : { scale: 0.98 }}
+                      onClick={async () => {
+                        playSound('click');
+                        if (isLocked) {
+                          alert('🔒 雙軌挑戰尚未解鎖！\n需要將【蔬食任務】或【淨塑任務】挑戰到 Lv.3 (完成前兩關) 後，才能解鎖雙軌整合挑戰喔！');
+                          return;
+                        }
+                        
+                        const targetLevel = getLevelForTrack(t, state.unlockedBadges);
+                        await updateFirebaseState({ track: t, level: targetLevel });
+                        setShowTrackSwitcherModal(false);
+                      }}
+                      className={cn(
+                        "w-full text-left p-4.5 rounded-3xl border-2 transition-all relative flex items-center gap-4 bg-white shadow-soft",
+                        isLocked ? "opacity-60 bg-gray-50 border-gray-line/30 cursor-not-allowed select-none filter grayscale" :
+                        isActive ? "border-text-main shadow-md" : "border-gray-line/30 hover:border-gray-line/60"
+                      )}
+                      style={!isLocked && isActive ? { borderColor: tData.themeColor, borderWidth: '3.5px' } : undefined}
+                    >
+                      {/* Icon circle */}
+                      <div className={cn(
+                        "w-13 h-13 rounded-2xl flex items-center justify-center text-3xl shrink-0 shadow-inner-soft",
+                        t === 'veg' ? "bg-green-light text-green-main" : 
+                        t === 'plastic' ? "bg-blue-light text-blue-main" : 
+                        "bg-gradient-to-br from-green-light to-blue-light"
+                      )}>
+                        {t === 'veg' ? '🥗' : t === 'plastic' ? '💧' : '🌍'}
+                      </div>
+
+                      {/* Details */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-[15px] text-text-main">
+                            {t === 'veg' ? '🌱 蔬食低碳挑戰' : t === 'plastic' ? '🌊 海岸淨塑挑戰' : '🌍 雙軌並進挑戰'}
+                          </span>
+                          {isLocked && (
+                            <span className="text-[9px] font-black text-red-500 bg-red-50 border border-red-200/50 px-2 py-0.5 rounded-lg flex items-center gap-0.5">未解鎖 🔒</span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-text-sub font-bold leading-normal mt-0.5">
+                          {isLocked ? '需要將「蔬食」或「淨塑」挑戰到第三關才能開啟喔！' :
+                           t === 'veg' ? '餐餐多吃蔬果，身體清爽少負擔，還能幫地球減碳！' :
+                           t === 'plastic' ? '少用塑膠袋與塑膠杯，愛護地球與海洋生物！' :
+                           '「蔬食」與「減塑」同時挑戰，永續環保的最高境界！'}
+                        </p>
+                      </div>
+
+                      {/* Selection indicator */}
+                      {!isLocked && isActive && (
+                        <div 
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-white shrink-0"
+                          style={{ backgroundColor: tData.themeColor }}
+                        >
+                          <Check className="w-3.5 h-3.5 stroke-[4]" />
+                        </div>
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </div>
             </motion.div>
           </div>
         )}
