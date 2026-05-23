@@ -1848,11 +1848,19 @@ export default function App() {
 
         {profileTab === 'badges' ? (
           <div className="px-8 flex-1">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="font-black text-lg text-text-main tracking-tight">徽章收藏庫</h3>
               <div className="text-[10px] font-black text-text-sub uppercase tracking-[0.2em]">
                 {state.unlockedBadges.length} / {BADGES.length}
               </div>
+            </div>
+
+            {/* Senior Friendly Badges Interaction Tip */}
+            <div className="bg-gray-line/35 rounded-2xl p-4.5 flex items-start gap-2.5 mb-8 border border-gray-line/20 shadow-inner-soft">
+              <span className="text-xl shrink-0">💡</span>
+              <p className="text-[11.5px] text-text-sub font-black leading-relaxed">
+                長輩小提示：點擊下方任何一個徽章，就可以看到「任務說明」與「如何拿到」喔！點擊灰色的未解鎖徽章，還能直接帶您前往地圖挑戰！
+              </p>
             </div>
 
             {[
@@ -2136,8 +2144,62 @@ export default function App() {
                   )}
                 </div>
               ) : (
-                <div className="text-[10px] font-black text-gray-lock tracking-widest uppercase flex items-center justify-center gap-2">
-                  <Lock className="w-3 h-3" /> 尚未解鎖
+                <div className="flex flex-col gap-4">
+                  <div className="text-[10px] font-black text-gray-lock tracking-widest uppercase flex items-center justify-center gap-2 bg-gray-line/45 py-2.5 rounded-xl border border-gray-line/10 shadow-inner">
+                    <Lock className="w-3.5 h-3.5" /> 尚未解鎖
+                  </div>
+                  
+                  {/* Senior friendly redirect/action button */}
+                  {(() => {
+                    const bTrack = selectedBadge.track as Track;
+                    const isDualLocked = bTrack === 'dual' && 
+                      getLevelForTrack('veg', state.unlockedBadges) < 3 && 
+                      getLevelForTrack('plastic', state.unlockedBadges) < 3;
+                      
+                    if (isDualLocked) {
+                      return (
+                        <div className="text-xs font-bold text-red-500 bg-red-50 border border-red-200/50 p-3.5 rounded-2xl leading-normal text-center shadow-sm">
+                          🔒 此挑戰路線目前處於鎖定狀態。<br />需要將「蔬食」或「淨塑」挑戰到第三關才能開啟喔！
+                        </div>
+                      );
+                    }
+
+                    if (state.track === bTrack) {
+                      return (
+                        <button
+                          onClick={() => {
+                            playSound('click');
+                            setSelectedBadge(null);
+                            handleNav('map');
+                          }}
+                          className="w-full text-white font-black py-4.5 rounded-2xl text-sm btn-active flex items-center justify-center gap-2 shadow-md hover:scale-[0.98] transition-all"
+                          style={{ backgroundColor: TRACK_DATA[bTrack]?.themeColor || '#4A9166' }}
+                        >
+                          🚀 前往地圖挑戰此關卡
+                        </button>
+                      );
+                    } else {
+                      return (
+                        <button
+                          onClick={async () => {
+                            playSound('click');
+                            setSelectedBadge(null);
+                            
+                            // Switch track in state
+                            const targetLevel = getLevelForTrack(bTrack, state.unlockedBadges);
+                            await updateFirebaseState({ track: bTrack, level: targetLevel });
+                            
+                            // Navigate to map view
+                            handleNav('map');
+                          }}
+                          className="w-full text-white font-black py-4.5 rounded-2xl text-sm btn-active flex items-center justify-center gap-2 shadow-md hover:scale-[0.98] transition-all"
+                          style={{ backgroundColor: TRACK_DATA[bTrack]?.themeColor || '#4A9166' }}
+                        >
+                          🔄 切換路線並前往地圖挑戰
+                        </button>
+                      );
+                    }
+                  })()}
                 </div>
               )}
             </motion.div>
