@@ -843,6 +843,7 @@ export default function App() {
     const isTrackCompleted = state.unlockedBadges.includes(`${track}_complete`);
     const tc = data.themeColor;
     const tl = data.lightColor;
+    const showFirstLevelGuide = state.level === 1 && state.checkInCount === 0 && selectedMapTaskIndex === null;
 
     let progressPercent = 0;
     if (isTrackCompleted) {
@@ -869,6 +870,11 @@ export default function App() {
           backgroundPosition: 'center top'
         }}
       >
+        {/* Dim background spotlight overlay */}
+        {showFirstLevelGuide && (
+          <div className="absolute inset-0 bg-black/45 z-25 transition-opacity duration-300 pointer-events-none" />
+        )}
+
         <div className="sticky top-0 z-20 px-6 py-6 bg-white/80 backdrop-blur-xl border-b border-gray-line/50 flex items-center justify-between">
           <h2 className="text-xl font-black text-text-main tracking-tight">
             {track === 'veg' ? '田園闖關地圖' : track === 'plastic' ? '海岸淨塑地圖' : '雙軌冒險地圖'}
@@ -884,6 +890,7 @@ export default function App() {
             const idx = 3 - reverseIdx;
             const status = idx + 1 < state.level ? 'done' : idx + 1 === state.level ? 'active' : 'locked';
             const isLevel1Node = idx === 0;
+            const isGuideActive = showFirstLevelGuide && isLevel1Node;
             
             // Dynamically position node based on the S-curve paths in the uploaded backgrounds.
             // plastic is reversed compared to veg and dual.
@@ -896,7 +903,8 @@ export default function App() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 className={cn(
-                  "relative z-10 flex items-center cursor-pointer",
+                  "relative flex items-center cursor-pointer",
+                  isGuideActive ? "z-30" : "z-10",
                   isLeft ? "justify-start pl-[16%] md:pl-[20%]" : "justify-end pr-[16%] md:pr-[20%]"
                 )}
                 onClick={() => {
@@ -917,6 +925,13 @@ export default function App() {
                     style={status !== 'locked' ? { borderColor: data.themeColor } : undefined}
                   >
                     {task.icon}
+                    {isGuideActive && (
+                      <div className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 bg-white text-text-main text-xs font-black px-4 py-2.5 rounded-2xl shadow-xl whitespace-nowrap border-2 border-text-main flex items-center gap-1.5 animate-bounce z-40">
+                        <span>💡 點選這裡開啟第一個挑戰！</span>
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-white" />
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-text-main -z-10 translate-y-[2px]" />
+                      </div>
+                    )}
                     {status === 'done' && (
                       <div
                         className="absolute -bottom-1 -right-1 w-7 h-7 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white"
@@ -2466,7 +2481,7 @@ export default function App() {
                     if (certificateImageUrl) {
                       const link = document.createElement('a');
                       link.href = certificateImageUrl;
-                      link.download = `慈心大挑戰_${
+                      link.download = `永續大挑戰_${
                         showRewardModal === 'veg' ? '蔬食守護者' : 
                         showRewardModal === 'plastic' ? '淨塑守護者' : 
                         '地球友善勇士'
@@ -2528,10 +2543,10 @@ export default function App() {
                   animate={{ opacity: 1, x: 0 }}
                   className="flex flex-col items-center"
                 >
-                  <div className="text-4xl mb-4 animate-bounce">🏆</div>
-                  <h4 className="font-black text-text-main text-lg mb-2">1. 累積 EXP 解鎖榮譽</h4>
+                  <div className="text-4xl mb-4 animate-bounce">🌍</div>
+                  <h4 className="font-black text-text-main text-lg mb-2">1. 地球的綠色召喚</h4>
                   <p className="text-xs text-text-sub font-semibold leading-relaxed mb-6">
-                    在「永續大挑戰」中，你每一次的綠色實踐都會轉化成 EXP 經驗值！提升等級還能解鎖各階段專屬稱號與精美徽章！
+                    我們的地球正面臨極端氣候與塑膠污染危機！但您可以成為改變的力量，點滴的善意實踐，都是守護這片大地的超能力。
                   </p>
                 </motion.div>
               )}
@@ -2542,10 +2557,10 @@ export default function App() {
                   animate={{ opacity: 1, x: 0 }}
                   className="flex flex-col items-center"
                 >
-                  <div className="text-4xl mb-4 animate-bounce">🗺️</div>
-                  <h4 className="font-black text-text-main text-lg mb-2">2. 展開地圖任務挑戰</h4>
+                  <div className="text-4xl mb-4 animate-bounce">🌱</div>
+                  <h4 className="font-black text-text-main text-lg mb-2">2. 四大階段習慣旅程</h4>
                   <p className="text-xs text-text-sub font-semibold leading-relaxed mb-6">
-                    點選下方導覽列的「地圖」或首頁的「前往挑戰地圖」按鈕，即可查看該軌道的所有關卡，開啟你的冒險之旅！
+                    每個挑戰都包含四大習慣養成修煉：從日常的「看見」察覺、踏出第一步的「選擇」、到「深化」成日常，最終「擴散」影響他人！
                   </p>
                 </motion.div>
               )}
@@ -2556,10 +2571,10 @@ export default function App() {
                   animate={{ opacity: 1, x: 0 }}
                   className="flex flex-col items-center"
                 >
-                  <div className="text-4xl mb-4 animate-bounce">📸</div>
-                  <h4 className="font-black text-text-main text-lg mb-2">3. 綠色實踐與打卡</h4>
+                  <div className="text-4xl mb-4 animate-bounce">🏆</div>
+                  <h4 className="font-black text-text-main text-lg mb-2">3. 行動打卡，解鎖榮譽</h4>
                   <p className="text-xs text-text-sub font-semibold leading-relaxed mb-6">
-                    點開關卡並點擊「立即打卡行動」，勾選你實行的環保項目、填寫心得，送出後就能獲得 EXP 並與大家分享喜悅！
+                    點開地圖關卡，勾選實踐項目並上傳打卡即可獲得 EXP！升級解鎖專屬頭銜，集滿四關還能領取精美的個人榮譽電子證書！
                   </p>
                 </motion.div>
               )}
@@ -2570,10 +2585,10 @@ export default function App() {
                   animate={{ opacity: 1, x: 0 }}
                   className="flex flex-col items-center"
                 >
-                  <div className="text-4xl mb-4 animate-bounce">⚙️</div>
-                  <h4 className="font-black text-text-main text-lg mb-2">4. 隨時切換挑戰軌道</h4>
+                  <div className="text-4xl mb-4 animate-bounce">🚀</div>
+                  <h4 className="font-black text-text-main text-lg mb-2">4. 隨時開啟新冒險</h4>
                   <p className="text-xs text-text-sub font-semibold leading-relaxed mb-6">
-                    除了蔬食、減塑，你可以隨時到個人帳號設定切換想要挑戰的軌道，所有已解鎖的徽章和經驗值進度都會被完美保留！
+                    您可以隨時在「蔬食低碳」、「海岸淨塑」與「雙軌並進」三條路線間自由切換，所有已解鎖的徽章和經驗值進度都會完美保留！
                   </p>
                 </motion.div>
               )}

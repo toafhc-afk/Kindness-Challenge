@@ -143,25 +143,25 @@ export const TRACK_DATA: Record<Track, TrackData> = {
 
 export const BADGES: Badge[] = [
   // Veg Track Badges
-  { id: 'veg_1', track: 'veg', level: 1, name: '餐桌觀察家', icon: 'badges/Veg_1_Small.png', largeIcon: 'badges/Veg_1.png', desc: '開始看見飲食與環境、生命的關聯。', condition: '完成蔬食關卡一', type: 'levelBadge' },
-  { id: 'veg_2', track: 'veg', level: 2, name: '蔬食行動芽', icon: 'badges/Veg_2_Small.png', largeIcon: 'badges/Veg_2.png', desc: '完成一次蔬食選擇，善意開始發芽。', condition: '完成蔬食關卡二', type: 'levelBadge' },
-  { id: 'veg_3', track: 'veg', level: 3, name: '綠色習慣家', icon: 'badges/Veg_3_Small.png', largeIcon: 'badges/Veg_3.png', desc: '累積多次蔬食行動，讓友善變成習慣。', condition: '完成蔬食關卡三', type: 'levelBadge' },
-  { id: 'veg_4', track: 'veg', level: 4, name: '友善餐桌使者', icon: 'badges/Veg_4_Small.png', largeIcon: 'badges/Veg_4.png', desc: '願意把蔬食行動分享給身邊的人。', condition: '完成蔬食關卡四', type: 'levelBadge' },
-  { id: 'veg_complete', track: 'veg', name: '蔬食守護者', icon: 'badges/Veg_5_Small.png', largeIcon: 'badges/Veg_5.png', desc: '你用一次次餐桌上的選擇，讓友善成為日常。', condition: '集滿蔬食軌道 4 枚關卡章', type: 'completeBadge', reward: ['蔬食守護者電子證書', '蔬食食譜卡 PDF', '蔬食守護者紀念貼紙圖檔'] },
+  { id: 'veg_1', track: 'veg', level: 1, name: '餐桌觀察家', icon: 'badges/Veg_1_Small.webp', largeIcon: 'badges/Veg_1.webp', desc: '開始看見飲食與環境、生命的關聯。', condition: '完成蔬食關卡一', type: 'levelBadge' },
+  { id: 'veg_2', track: 'veg', level: 2, name: '蔬食行動芽', icon: 'badges/Veg_2_Small.webp', largeIcon: 'badges/Veg_2.webp', desc: '完成一次蔬食選擇，善意開始發芽。', condition: '完成蔬食關卡二', type: 'levelBadge' },
+  { id: 'veg_3', track: 'veg', level: 3, name: '綠色習慣家', icon: 'badges/Veg_3_Small.webp', largeIcon: 'badges/Veg_3.webp', desc: '累積多次蔬食行動，讓友善變成習慣。', condition: '完成蔬食關卡三', type: 'levelBadge' },
+  { id: 'veg_4', track: 'veg', level: 4, name: '友善餐桌使者', icon: 'badges/Veg_4_Small.webp', largeIcon: 'badges/Veg_4.webp', desc: '願意把蔬食行動分享給身邊的人。', condition: '完成蔬食關卡四', type: 'levelBadge' },
+  { id: 'veg_complete', track: 'veg', name: '蔬食守護者', icon: 'badges/Veg_5_Small.webp', largeIcon: 'badges/Veg_5.webp', desc: '你用一次次餐桌上的選擇，讓友善成為日常。', condition: '集滿蔬食軌道 4 枚關卡章', type: 'completeBadge', reward: ['蔬食守護者電子證書', '蔬食食譜卡 PDF', '蔬食守護者紀念貼紙圖檔'] },
 
   // Plastic Track Badges
-  { id: 'plastic_1', track: 'plastic', level: 1, name: '塑膠偵查員', icon: 'badges/Plastic_1_Small.png', largeIcon: 'badges/Plastic_1.png', desc: '開始發現生活中的一次性塑膠。', condition: '完成淨塑關卡一', type: 'levelBadge' },
-  { id: 'plastic_2', track: 'plastic', level: 2, name: '少塑行動員', icon: 'badges/Plastic_2_Small.png', largeIcon: 'badges/Plastic_2.png', desc: '做出一次低塑、少包裝的友善選擇。', condition: '完成淨塑關卡二', type: 'levelBadge' },
-  { id: 'plastic_3', track: 'plastic', level: 3, name: '自備生活家', icon: 'badges/Plastic_3_Small.png', largeIcon: 'badges/Plastic_3.png', desc: '開始養成自備餐具、水壺、購物袋的習慣。', condition: '完成淨塑關卡三', type: 'levelBadge' },
-  { id: 'plastic_4', track: 'plastic', level: 4, name: '海洋守護使者', icon: 'badges/Plastic_4_Small.png', largeIcon: 'badges/Plastic_4.png', desc: '把淨塑方法分享給更多人。', condition: '完成淨塑關卡四', type: 'levelBadge' },
-  { id: 'plastic_complete', track: 'plastic', name: '淨塑守護者', icon: 'badges/Plastic_5_Small.png', largeIcon: 'badges/Plastic_5.png', desc: '你讓一次少用，變成一片海洋的喘息。', condition: '集滿淨塑軌道 4 枚關卡章', type: 'completeBadge', reward: ['淨塑守護者電子證書', '減塑生活行動小卡 PDF', '淨塑守護者紀念貼紙圖檔'] },
+  { id: 'plastic_1', track: 'plastic', level: 1, name: '塑膠偵查員', icon: 'badges/Plastic_1_Small.webp', largeIcon: 'badges/Plastic_1.webp', desc: '開始發現生活中的一次性塑膠。', condition: '完成淨塑關卡一', type: 'levelBadge' },
+  { id: 'plastic_2', track: 'plastic', level: 2, name: '少塑行動員', icon: 'badges/Plastic_2_Small.webp', largeIcon: 'badges/Plastic_2.webp', desc: '做出一次低塑、少包裝的友善選擇。', condition: '完成淨塑關卡二', type: 'levelBadge' },
+  { id: 'plastic_3', track: 'plastic', level: 3, name: '自備生活家', icon: 'badges/Plastic_3_Small.webp', largeIcon: 'badges/Plastic_3.webp', desc: '開始養成自備餐具、水壺、購物袋的習慣。', condition: '完成淨塑關卡三', type: 'levelBadge' },
+  { id: 'plastic_4', track: 'plastic', level: 4, name: '海洋守護使者', icon: 'badges/Plastic_4_Small.webp', largeIcon: 'badges/Plastic_4.webp', desc: '把淨塑方法分享給更多人。', condition: '完成淨塑關卡四', type: 'levelBadge' },
+  { id: 'plastic_complete', track: 'plastic', name: '淨塑守護者', icon: 'badges/Plastic_5_Small.webp', largeIcon: 'badges/Plastic_5.webp', desc: '你讓一次少用，變成一片海洋的喘息。', condition: '集滿淨塑軌道 4 枚關卡章', type: 'completeBadge', reward: ['淨塑守護者電子證書', '減塑生活行動小卡 PDF', '淨塑守護者紀念貼紙圖檔'] },
 
   // Dual Track Badges
-  { id: 'dual_1', track: 'dual', level: 1, name: '雙軌啟程者', icon: 'badges/Dual_1_Small.png', largeIcon: 'badges/Dual_1.png', desc: '同時看見飲食與日常用品對環境的影響。', condition: '完成雙軌關卡一', type: 'levelBadge' },
-  { id: 'dual_2', track: 'dual', level: 2, name: '雙倍行動家', icon: 'badges/Dual_2_Small.png', largeIcon: 'badges/Dual_2.png', desc: '完成蔬食與淨塑的雙重友善行動。', condition: '完成雙軌關卡二', type: 'levelBadge' },
-  { id: 'dual_3', track: 'dual', level: 3, name: '永續實踐者', icon: 'badges/Dual_3_Small.png', largeIcon: 'badges/Dual_3.png', desc: '將兩種友善行動逐步養成生活習慣。', condition: '完成雙軌關卡三', type: 'levelBadge' },
-  { id: 'dual_4', track: 'dual', level: 4, name: '慈心影響力使者', icon: 'badges/Dual_4_Small.png', largeIcon: 'badges/Dual_4.png', desc: '把雙軌行動分享出去，帶動更多人一起參與。', condition: '完成雙軌關卡四', type: 'levelBadge' },
-  { id: 'dual_complete', track: 'dual', name: '地球友善勇士', icon: 'badges/Dual_5_Small.png', largeIcon: 'badges/Dual_5.png', desc: '你把善意走成一條路，也把改變帶給更多人。', condition: '集滿雙軌挑戰 4 枚關卡章', type: 'completeBadge', reward: ['地球友善勇士電子證書', '限定雙軌紀念章圖檔', '關農限定感謝小卡', '友善生活完成紀念頁'] }
+  { id: 'dual_1', track: 'dual', level: 1, name: '雙軌啟程者', icon: 'badges/Dual_1_Small.webp', largeIcon: 'badges/Dual_1.webp', desc: '同時看見飲食與日常用品對環境的影響。', condition: '完成雙軌關卡一', type: 'levelBadge' },
+  { id: 'dual_2', track: 'dual', level: 2, name: '雙倍行動家', icon: 'badges/Dual_2_Small.webp', largeIcon: 'badges/Dual_2.webp', desc: '完成蔬食與淨塑的雙重友善行動。', condition: '完成雙軌關卡二', type: 'levelBadge' },
+  { id: 'dual_3', track: 'dual', level: 3, name: '永續實踐者', icon: 'badges/Dual_3_Small.webp', largeIcon: 'badges/Dual_3.webp', desc: '將兩種友善行動逐步養成生活習慣。', condition: '完成雙軌關卡三', type: 'levelBadge' },
+  { id: 'dual_4', track: 'dual', level: 4, name: '慈心影響力使者', icon: 'badges/Dual_4_Small.webp', largeIcon: 'badges/Dual_4.webp', desc: '把雙軌行動分享出去，帶動更多人一起參與。', condition: '完成雙軌關卡四', type: 'levelBadge' },
+  { id: 'dual_complete', track: 'dual', name: '地球友善勇士', icon: 'badges/Dual_5_Small.webp', largeIcon: 'badges/Dual_5.webp', desc: '你把善意走成一條路，也把改變帶給更多人。', condition: '集滿雙軌挑戰 4 枚關卡章', type: 'completeBadge', reward: ['地球友善勇士電子證書', '限定雙軌紀念章圖檔', '關農限定感謝小卡', '友善生活完成紀念頁'] }
 ];
 
 export const MOCK_FEED = [

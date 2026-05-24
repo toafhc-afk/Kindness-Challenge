@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>永續大挑戰 - 功能與徽章指南 (9:16)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+
+    :root {
+      --bg-color: #F4F7F6;
+      --text-main: #172B27;
+      --text-sub: #5E716D;
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --card-shadow: 0 15px 45px rgba(162, 179, 175, 0.25);
+      --border-radius: 30px;
+      
+      --veg-color: #9FD356;
+      --veg-light: #E8F5D8;
+      --plastic-color: #3C91E6;
+      --plastic-light: #E1EEFA;
+      --dual-color: #FF9F1C;
+      --dual-light: #FFF0D0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background-color: #DDE5E2;
+      width: 1080px;
+      margin: 0 auto;
+      padding: 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* 9:16 Page Container */
+    .page {
+      width: 1080px;
+      height: 1920px;
+      background-color: var(--bg-color);
+      padding: 70px 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      page-break-after: always;
+    }
+
+    .page-title-box {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .page-title {
+      font-size: 46px;
+      font-weight: 900;
+      color: #172B27;
+      position: relative;
+      display: inline-block;
+      padding-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    .page-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 20%;
+      width: 60%;
+      height: 6px;
+      background-color: var(--veg-color);
+      border-radius: 3px;
+    }
+
+    .page-subtitle {
+      font-size: 22px;
+      color: var(--text-sub);
+      margin-top: 10px;
+      font-weight: 500;
+    }
+
+    .page-footer {
+      text-align: center;
+      font-size: 16px;
+      color: var(--text-sub);
+      font-weight: 500;
+      letter-spacing: 2px;
+    }
+
+    /* Phone Mockups */
+    .phone-mockup {
+      border: 8px solid #172B27;
+      border-radius: 28px;
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      background-color: white;
+      position: relative;
+    }
+
+    .phone-mockup img {
+      width: 100%;
+      display: block;
+    }
+
+    .phone-label {
+      background-color: #172B27;
+      color: white;
+      text-align: center;
+      padding: 8px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    /* Toolbar Feature Grid */
+    .feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .feature-item {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 22px 25px;
+      box-shadow: var(--card-shadow);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      transition: all 0.3s;
+    }
+
+    .feature-icon-wrapper {
+      width: 65px;
+      height: 65px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .feature-item.home .feature-icon-wrapper { background-color: var(--veg-light); color: var(--veg-color); }
+    .feature-item.map .feature-icon-wrapper { background-color: var(--plastic-light); color: var(--plastic-color); }
+    .feature-item.checkin .feature-icon-wrapper { background-color: #FFF0F2; color: #FF4D6D; }
+    .feature-item.feed .feature-icon-wrapper { background-color: #F0EDFF; color: #7209B7; }
+    .feature-item.profile .feature-icon-wrapper { background-color: var(--dual-light); color: var(--dual-color); }
+
+    .feature-details {
+      flex: 1;
+    }
+
+    .feature-name {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .feature-desc {
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--text-sub);
+      font-weight: 500;
+    }
+
+    /* Badge Grid Styles */
+    .badge-grid-container {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 30px;
+      box-shadow: var(--card-shadow);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .badge-track-section {
+      margin-bottom: 15px;
+    }
+
+    .badge-track-header {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text-main);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 2px dashed #E2E8F0;
+      padding-bottom: 6px;
+    }
+
+    .badge-track-header.veg { color: #4A7A08; border-bottom-color: var(--veg-light); }
+    .badge-track-header.plastic { color: #185E9E; border-bottom-color: var(--plastic-light); }
+    .badge-track-header.dual { color: #A66200; border-bottom-color: var(--dual-light); }
+
+    .badge-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 15px;
+    }
+
+    .badge-card {
+      background-color: #FAFAF9;
+      border-radius: 18px;
+      padding: 12px 6px;
+      text-align: center;
+      border: 1px solid #EAEAE6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      height: 195px;
+    }
+
+    .badge-card.complete {
+      background-color: #FFFDF5;
+      border: 2px solid #FCD34D;
+    }
+
+    .badge-img {
+      width: 70px;
+      height: 70px;
+      object-fit: contain;
+      margin-bottom: 8px;
+    }
+
+    .badge-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 4px;
+      line-height: 1.2;
+    }
+
+    .badge-desc {
+      font-size: 12px;
+      color: var(--text-sub);
+      line-height: 1.3;
+    }
+
+    .badge-condition {
+      font-size: 10px;
+      font-weight: 800;
+      color: white;
+      background-color: var(--text-sub);
+      padding: 2px 6px;
+      border-radius: 50px;
+      margin-top: 6px;
+      white-space: nowrap;
+    }
+
+    .badge-card.complete .badge-condition {
+      background-color: #F59E0B;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PAGE 1: 核心功能與工具列說明 -->
+  <div class="page">
+    <div class="page-title-box">
+      <h2 class="page-title">認識首頁與底部功能列</h2>
+      <p class="page-subtitle">一指掌握你的綠色冒險，各個功能說明快速看！</p>
+    </div>
+
+    <!-- Layout Row -->
+    <div style="display: flex; gap: 40px; align-items: stretch; flex: 1; margin: 20px 0 30px;">
+      <!-- Left side: Toolbar explanations -->
+      <div style="flex: 1.2; display: flex; flex-direction: column; justify-content: space-between; gap: 15px;">
+        <div class="feature-list">
+          
+          <!-- Home Tab -->
+          <div class="feature-item home">
+            <div class="feature-icon-wrapper">🏠</div>
+            <div class="feature-details">
+              <h3 class="feature-name">挑戰首頁 (Home)</h3>
+              <p class="feature-desc">查看當下的冒險天數、累積經驗值 (EXP) 與目前等級。升級還能解鎖對應等級的綠色稱號！</p>
+            </div>
+          </div>
+
+          <!-- Map Tab -->
+          <div class="feature-item map">
+            <div class="feature-icon-wrapper">🗺️</div>
+            <div class="feature-details">
+              <h3 class="feature-name">關卡地圖 (Map)</h3>
+              <p class="feature-desc">將你選擇的挑戰軌道（蔬食/淨塑）圖像化。由淺入深呈現 4 個關卡節點，點擊節點即可查看各關詳情與打卡狀態。</p>
+            </div>
+          </div>
+
+          <!-- Check-in Tab -->
+          <div class="feature-item checkin">
+            <div class="feature-icon-wrapper">📷</div>
+            <div class="feature-details">
+              <h3 class="feature-name" style="color: #FF4D6D;">核心打卡 (Check-in)</h3>
+              <p class="feature-desc"><b>遊戲中最關鍵的按鈕！</b>隨手拍下你的綠色實踐照片（如蔬食午餐、自備餐盒），填寫記錄即可上傳完成今日打卡。</p>
+            </div>
+          </div>
+
+          <!-- Feed Tab -->
+          <div class="feature-item feed">
+            <div class="feature-icon-wrapper">🧭</div>
+            <div class="feature-details">
+              <h3 class="feature-name">探索社群 (Explore Feed)</h3>
+              <p class="feature-desc">看見來自全台灣所有玩家的減碳打卡日記！你可以在這裡留言交流、給夥伴按個讚（愛心）互相激勵打氣！</p>
+            </div>
+          </div>
+
+          <!-- Profile Tab -->
+          <div class="feature-item profile">
+            <div class="feature-icon-wrapper">👤</div>
+            <div class="feature-details">
+              <h3 class="feature-name">個人成就 (Profile)</h3>
+              <p class="feature-desc">瀏覽你收集的所有榮譽徽章、點擊下載印有你姓名的專屬電子證書，並查看解鎖的實體與數位回饋獎勵。</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Right side: App screenshot mockup -->
+      <div style="flex: 0.8; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(255,255,255,0.4); border-radius: 24px; padding: 20px; border: 1px solid rgba(255,255,255,0.6);">
+        <div style="font-size: 16px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 2px; text-align: center; margin-bottom: 10px;">📱 地圖與底部工具列</div>
+        
+        <div class="phone-mockup" style="width: 320px;">
+          <img src="./screenshot_map.png" alt="地圖畫面與功能列">
+          <div class="phone-label">關卡地圖與底部選單</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">第 1 頁 / 共 3 頁</div>
+  </div>
+
+
+  <!-- PAGE 2: 核心玩法攻略 (如何獲得積分與完成挑戰) -->
+  <div class="page">
+    <div class="page-title-box">
+      <h2 class="page-title">核心玩法攻略與必看步驟</h2>
+      <p class="page-subtitle">如何打卡記錄、賺取經驗值，解鎖綠色稱號與實用指南？</p>
+    </div>
+
+    <!-- Layout Row -->
+    <div style="display: flex; gap: 40px; align-items: stretch; flex: 1; margin: 20px 0 30px;">
+      <!-- Left side: Phone mockup -->
+      <div style="flex: 0.8; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(255,255,255,0.4); border-radius: 24px; padding: 20px; border: 1px solid rgba(255,255,255,0.6);">
+        <div style="font-size: 16px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 2px; text-align: center; margin-bottom: 10px;">📸 打卡紀錄畫面</div>
+        <div class="phone-mockup" style="width: 320px;">
+          <img src="./screenshot_checkin.png" alt="打卡記錄彈窗">
+          <div class="phone-label">填寫減碳紀錄與上傳照片</div>
+        </div>
+      </div>
+
+      <!-- Right side: Steps -->
+      <div style="flex: 1.2; display: flex; flex-direction: column; justify-content: space-between; gap: 15px;">
+        <div style="background: var(--card-bg); border-radius: var(--border-radius); padding: 30px; box-shadow: var(--card-shadow); border: 1px solid rgba(255, 255, 255, 0.8); flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 20px;">
+          
+          <div style="display: flex; gap: 20px; align-items: flex-start;">
+            <div style="font-family: 'Fredoka', sans-serif; font-size: 32px; font-weight: 600; color: var(--veg-color); background: var(--veg-light); width: 55px; height: 55px; border-radius: 50%; display: flex; items-center; justify-content: center; flex-shrink: 0; align-items: center;">1</div>
+            <div>
+              <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main); margin-bottom: 6px;">點選相機，開啟記錄</h3>
+              <p style="font-size: 15px; color: var(--text-sub); line-height: 1.5; font-weight: 500;">
+                點擊底部工具列正中央圓形的 **相機 (打卡)** 按鈕，或在地圖上點擊你正在挑戰的關卡，即可彈出打卡表單。
+              </p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 20px; align-items: flex-start;">
+            <div style="font-family: 'Fredoka', sans-serif; font-size: 32px; font-weight: 600; color: var(--plastic-color); background: var(--plastic-light); width: 55px; height: 55px; border-radius: 50%; display: flex; items-center; justify-content: center; flex-shrink: 0; align-items: center;">2</div>
+            <div>
+              <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main); margin-bottom: 6px;">勾選選項，拍照上傳</h3>
+              <p style="font-size: 15px; color: var(--text-sub); line-height: 1.5; font-weight: 500;">
+                依據關卡要求，勾選你的實際環保行為（如：我不使用一次性餐具、我吃了全蔬食），拍下照片或從手機相簿選擇上傳，並寫下心得分享。
+              </p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 20px; align-items: flex-start;">
+            <div style="font-family: 'Fredoka', sans-serif; font-size: 32px; font-weight: 600; color: var(--dual-color); background: var(--dual-light); width: 55px; height: 55px; border-radius: 50%; display: flex; items-center; justify-content: center; flex-shrink: 0; align-items: center;">3</div>
+            <div>
+              <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main); margin-bottom: 6px;">累積經驗 (EXP)，晉升稱號</h3>
+              <p style="font-size: 15px; color: var(--text-sub); line-height: 1.5; font-weight: 500;">
+                打卡送出後即可現賺 EXP！隨著經驗值提升，你的等級會不斷晉級，解鎖如 **「綠色新芽」➔「環保尖兵」➔「地球衛士」** 等超帥氣榮譽頭銜！
+              </p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 20px; align-items: flex-start;">
+            <div style="font-family: 'Fredoka', sans-serif; font-size: 32px; font-weight: 600; color: #7209B7; background: #F0EDFF; width: 55px; height: 55px; border-radius: 50%; display: flex; items-center; justify-content: center; flex-shrink: 0; align-items: center;">4</div>
+            <div>
+              <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main); margin-bottom: 6px;">收集徽章，下載個人證書</h3>
+              <p style="font-size: 15px; color: var(--text-sub); line-height: 1.5; font-weight: 500;">
+                完成各關卡任務可解鎖精美徽章。軌道全通關後，還能隨時於「我的」頁面一鍵生成個人的 **永續挑戰完賽證書**，分享到 LINE 群組或 FB 炫耀你的綠色成就！
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">第 2 頁 / 共 3 頁</div>
+  </div>
+
+
+  <!-- PAGE 3: 榮譽徽章手冊：挑戰你的收集慾！ -->
+  <div class="page">
+    <div class="page-title-box">
+      <h2 class="page-title">永續挑戰榮譽徽章一覽</h2>
+      <p class="page-subtitle">挑戰三大軌道、集滿 15 款精美徽章，喚醒你的收集靈魂！</p>
+    </div>
+
+    <!-- Badge Grid Container -->
+    <div class="badge-grid-container">
+      
+      <!-- Veg Badges -->
+      <div class="badge-track-section">
+        <div class="badge-track-header veg">🌱 蔬食挑戰軌道徽章</div>
+        <div class="badge-grid">
+          <div class="badge-card">
+            <img class="badge-img" src="../public/badges/Veg_1_Small.png" alt="餐桌觀察家">
+            <h4 class="badge-title">餐桌觀察家</h4>
+            <p class="badge-desc">看見飲食與環境的關聯</p>
+            <span class="badge-condition">完成蔬食關卡 1</span>
+          </div>
+          <div class="badge-card">
+            <img class="badge-img" src="../public/badges/Veg_2_Small.png" alt="蔬食行動芽">
+            <h4 class="badge-title">蔬食行動芽</h4>
+            <p class="badge-desc">做出一次無肉蔬食選擇</p>
+            <span class="badge-condition">完成蔬食關卡 2</span>
+          </div>
+          <div class="badge-card">
+            <img class="badge-img" src="../public/badges/Veg_3_Small.png" alt="綠色習慣家">
+            <h4 class="badge-title">綠色習慣家</h4>
+            <p class="badge-desc">累積多次蔬食打卡日記</p>
+            <span class="badge-condition">完成蔬食關卡 3</span>
+          </div>
+          <div class="badge-card">
+            <img class="badge-img" src="../public/badges/Veg_4_Small.png" alt="友善餐桌使者">
+            <h4 class="badge-title">友善餐桌使者</h4>
+            <p class="badge-desc">分享並推廣蔬食行動</p>
+            <span class="badge-condition">完成蔬食關卡 4</span>
+          </div>
+          <div class="badge-card complete">
+            <img class="badge-img" src="../public/badges/Veg_5_Small.png" alt="蔬食守護者">
+            <h4 class="badge-title" style="color: #4A7A08;">蔬食守護者</h4>
+            <p class="badge-desc">集滿軌道 4 枚徽章</p>
+            <span class="badge-condition">蔬食軌道大滿貫</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Plastic Badges -->
+      <div class="badge-track-section">
+        <div class="badge-track-header plastic">🥤 淨塑挑戰軌道徽章</div>
+        <div class="badge-grid">
+          <div class="badge-card">
+            <img class="badge-img" src="../public/badges/Plastic_1_Small.png" alt="塑膠偵查員">
+            <h4 class="badge-title">塑膠偵查員</h4>
+            <p class="badge-desc">記錄日常一次性塑膠</p>
+            <span class="badge-condition">完成淨塑關卡 1</span>
+          </div>
+          <div class="badge-card">
+            <img class="badge-img" src="../public/badges/Plastic_2_Small.png" alt="少塑行動員">
+            <h4 class="badge-title">少塑行動員</h4>
+            <p class="badge-desc">做出少塑、裸裝選擇</p>
+            <span class="badge-condition">完成淨塑關卡 2</span>
+          </div>
+          <div class="badge-card">
+            <img class="badge-img" src="../public/badges/Plastic_3_Small.png" alt="自備生活家">
+            <h4 class="badge-title">自備生活家</h4>
+            <p class="badge-desc">養成自備環保袋餐具習慣</p>
+            <span class="badge-condition">完成淨塑關卡 3</span>
+          </div>
+          <div class="badge-card">
+            <img class="badge-img" src="../public/badges/Plastic_4_Small.png" alt="海洋守護使者">
+            <h4 class="badge-title">海洋守護使者</h4>
+            <p class="badge-desc">與朋友分享減塑妙招</p>
+            <span class="badge-condition">完成淨塑關卡 4</span>
+          </div>
+          <div class="badge-card complete">
+            <img class="badge-img" src="../public/badges/Plastic_5_Small.png" alt="淨塑守護者">
+            <h4 class="badge-title" style="color: #185E9E;">淨塑守護者</h4>
+            <p class="badge-desc">集滿軌道 4 枚徽章</p>
+            <span class="badge-condition">淨塑軌道大滿貫</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dual Badges -->
+      <div class="badge-track-section" style="margin-bottom: 0;">
+        <div class="badge-track-header dual">🌍 雙軌挑戰軌道徽章</div>
+        <div class="badge-grid">
+          <div class="badge-card">
+            <img class="badge-img" src="../public/badges/Dual_1_Small.png" alt="雙軌啟程者">
+            <h4 class="badge-title">雙軌啟程者</h4>
+            <p class="badge-desc">同時記錄飲食與塑膠使用</p>
+            <span class="badge-condition">完成雙軌關卡 1</span>
+          </div>
+          <div class="badge-card">
+            <img class="badge-img" src="../public/badges/Dual_2_Small.png" alt="雙倍行動家">
+            <h4 class="badge-title">雙倍行動家</h4>
+            <p class="badge-desc">同時完成蔬食與減塑行為</p>
+            <span class="badge-condition">完成雙軌關卡 2</span>
+          </div>
+          <div class="badge-card">
+            <img class="badge-img" src="../public/badges/Dual_3_Small.png" alt="永續實踐者">
+            <h4 class="badge-title">永續實踐者</h4>
+            <p class="badge-desc">雙重友善習慣深化培養</p>
+            <span class="badge-condition">完成雙軌關卡 3</span>
+          </div>
+          <div class="badge-card">
+            <img class="badge-img" src="../public/badges/Dual_4_Small.png" alt="影響力使者">
+            <h4 class="badge-title">影響力使者</h4>
+            <p class="badge-desc">發起多人的綠色環保聚會</p>
+            <span class="badge-condition">完成雙軌關卡 4</span>
+          </div>
+          <div class="badge-card complete">
+            <img class="badge-img" src="../public/badges/Dual_5_Small.png" alt="地球友善勇士">
+            <h4 class="badge-title" style="color: #A66200;">地球友善勇士</h4>
+            <p class="badge-desc">集滿軌道 4 枚徽章</p>
+            <span class="badge-condition">雙軌軌道大滿貫</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="page-footer" style="margin-top: 15px;">第 3 頁 / 共 3 頁</div>
+  </div>
+
+</body>
+</html>

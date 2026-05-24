@@ -153,7 +153,7 @@ export async function generateCertificate(
   ctx.textAlign = 'left';
   ctx.fillStyle = '#7D8DAA';
   ctx.font = "bold 24px 'Noto Sans TC', sans-serif";
-  ctx.fillText('慈心大挑戰小組', 180, 1420);
+  ctx.fillText('永續大挑戰小組', 180, 1420);
 
   // Signature line
   ctx.strokeStyle = '#D1D5DB';
