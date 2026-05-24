@@ -1580,24 +1580,7 @@ export default function App() {
           }
         }
 
-        // 2. Create CheckIn record
-        console.log('Creating checkin record...');
-        await addDoc(collection(db, 'checkins'), {
-          userId: user?.uid,
-          userName: user?.displayName || '匿名探險家',
-          userAvatar: track,
-          track,
-          level: state.level, // The level they just completed
-          text: checkinText,
-          imageUrl,
-          checklistItems: checkinSelectedOptions,
-          timestamp: serverTimestamp(),
-          expGained: amount + (mapUp ? 50 : 0),
-          likes: 0
-        });
-
-        // 3. Update User State
-        console.log('Updating user state...');
+        // 2. Prepare updates & save in parallel
         const updates: Partial<AppState> = {
           exp: newExp,
           level: newLevel,
@@ -1608,7 +1591,24 @@ export default function App() {
           unlockedBadges: newBadges,
           badgeUnlockDates: newBadgeUnlockDates
         };
-        await updateFirebaseState(updates);
+
+        console.log('Saving checkin record and updating state in parallel...');
+        await Promise.all([
+          addDoc(collection(db, 'checkins'), {
+            userId: user?.uid,
+            userName: user?.displayName || '匿名探險家',
+            userAvatar: track,
+            track,
+            level: state.level, // The level they just completed
+            text: checkinText,
+            imageUrl,
+            checklistItems: checkinSelectedOptions,
+            timestamp: serverTimestamp(),
+            expGained: amount + (mapUp ? 50 : 0),
+            likes: 0
+          }),
+          updateFirebaseState(updates)
+        ]);
 
         // Reset checkin form state
         setCheckinText('');
