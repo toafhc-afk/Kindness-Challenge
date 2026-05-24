@@ -1753,10 +1753,17 @@ export default function App() {
                       key={idx} 
                       onClick={() => {
                         playSound('click');
+                        let nextOptions = [...checkinSelectedOptions];
                         if (isChecked) {
-                          setCheckinSelectedOptions(checkinSelectedOptions.filter(o => o !== item));
+                          nextOptions = checkinSelectedOptions.filter(o => o !== item);
                         } else {
-                          setCheckinSelectedOptions([...checkinSelectedOptions, item]);
+                          nextOptions = [...checkinSelectedOptions, item];
+                        }
+                        setCheckinSelectedOptions(nextOptions);
+
+                        // Auto-scroll to textarea if they select an option for the first time
+                        if (!isChecked && nextOptions.length === 1) {
+                          smoothScrollToElement('[data-guide="checkin-textarea"]', 'center');
                         }
                       }}
                       className={cn(
