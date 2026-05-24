@@ -520,15 +520,27 @@ export default function App() {
       <h1 className="text-2xl font-black text-text-main mb-2">選擇你的挑戰軌道</h1>
       <p className="text-sm text-text-sub mb-3 font-medium">選擇適合你的路線，開啟你的永續旅程！</p>
 
-      <button
-        onClick={() => {
-          playSound('click');
-          setShowQuizModal(true);
-        }}
-        className="w-full mb-6 py-3 px-4 bg-green-light border border-green-main/20 text-green-main rounded-2xl text-xs font-black flex items-center justify-center gap-2 hover:bg-green-light/80 transition-all btn-active"
-      >
-        🔍 不知道該選哪一個？點我 3 秒快速測驗！
-      </button>
+      <div className="flex gap-2.5 mb-6 w-full">
+        <button
+          onClick={() => {
+            playSound('click');
+            setShowQuizModal(true);
+          }}
+          className="flex-1 py-3 px-3 bg-green-light border border-green-main/20 text-green-main rounded-2xl text-[11px] font-black flex items-center justify-center gap-1.5 hover:bg-green-light/80 transition-all btn-active shrink-0"
+        >
+          🔍 永續屬性快速檢測
+        </button>
+        <button
+          onClick={() => {
+            playSound('click');
+            setTutorialSlide(0);
+            setShowTutorialModal(true);
+          }}
+          className="flex-1 py-3 px-3 bg-white border border-gray-line text-text-main rounded-2xl text-[11px] font-black flex items-center justify-center gap-1.5 hover:bg-gray-50 transition-all btn-active shrink-0"
+        >
+          💡 重看玩法教學
+        </button>
+      </div>
 
       <div className="space-y-4 mb-8">
         {(['veg', 'plastic', 'dual'] as Track[]).map((t) => {
@@ -2747,13 +2759,46 @@ export default function App() {
                 <motion.div 
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="flex flex-col items-center"
+                  className="flex flex-col items-center w-full text-left"
                 >
-                  <div className="text-4xl mb-4 animate-bounce">🌱</div>
-                  <h4 className="font-black text-text-main text-lg mb-2">2. 四大階段習慣旅程</h4>
-                  <p className="text-xs text-text-sub font-semibold leading-relaxed mb-6">
-                    每個挑戰都包含四大習慣養成修煉：從日常的「看見」察覺、踏出第一步的「選擇」、到「深化」成日常，最終「擴散」影響他人！
-                  </p>
+                  <h4 className="font-black text-text-main text-base mb-3 text-center self-center">2. 三大挑戰路線對比</h4>
+                  
+                  <div className="flex flex-col gap-2.5 w-full max-h-[220px] overflow-y-auto pr-1">
+                    {/* Veg Card */}
+                    <div className="bg-[#EAF7ED] border border-[#2D6A4F]/20 rounded-2xl p-3 flex gap-2">
+                      <span className="text-xl shrink-0 mt-0.5">🥬</span>
+                      <div>
+                        <h5 className="font-black text-[10px] text-[#2D6A4F] leading-tight">蔬食低碳 ➔ 「嘴巴做環保」</h5>
+                        <p className="text-[9px] text-text-sub font-semibold mt-0.5 leading-normal">
+                          少吃肉、多吃植物性食物。第一步非常簡單，只要在午餐觀察青菜比例。
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Plastic Card */}
+                    <div className="bg-[#E8F1F5] border border-[#1D3557]/20 rounded-2xl p-3 flex gap-2">
+                      <span className="text-xl shrink-0 mt-0.5">💧</span>
+                      <div>
+                        <h5 className="font-black text-[10px] text-[#1D3557] leading-tight">海岸淨塑 ➔ 「出門帶裝備」</h5>
+                        <p className="text-[9px] text-text-sub font-semibold mt-0.5 leading-normal">
+                          自備環保杯/袋，拒絕一次性塑膠。第一步是數數自己今天用了幾個塑膠袋。
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Dual Card */}
+                    <div className="bg-[#F3F4F6] border border-gray-line rounded-2xl p-3 flex gap-2 opacity-75 relative">
+                      <span className="text-xl shrink-0 mt-0.5">🌍</span>
+                      <div>
+                        <h5 className="font-black text-[10px] text-text-main leading-tight flex items-center gap-1">
+                          雙軌並進 ➔ 「永續大師」 <span className="text-[8px] bg-gray-line text-text-sub px-1 rounded font-normal">🔒 鎖定</span>
+                        </h5>
+                        <p className="text-[9px] text-text-sub font-semibold mt-0.5 leading-normal">
+                          蔬食與淨塑雙修挑戰。需要前兩個軌道皆達 Lv.3 才能解鎖。
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </motion.div>
               )}
 
