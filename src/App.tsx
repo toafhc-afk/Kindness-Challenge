@@ -307,6 +307,13 @@ export default function App() {
       }, 100);
     } else if (dashboardGuideStep === 2) {
       setTimeout(() => {
+        const switcherCard = document.querySelector('[data-guide="switcher-card"]');
+        if (switcherCard) {
+          switcherCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    } else if (dashboardGuideStep === 3) {
+      setTimeout(() => {
         const taskCard = document.querySelector('[data-guide="task-card"]');
         if (taskCard) {
           taskCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -314,6 +321,18 @@ export default function App() {
       }, 100);
     }
   }, [dashboardGuideStep]);
+
+  // Smooth scroll to confirm button when a temporary track is selected on track selection screen
+  useEffect(() => {
+    if (tempTrack && currentView === 'select') {
+      setTimeout(() => {
+        const confirmBtn = document.querySelector('[data-guide="confirm-track-btn"]');
+        if (confirmBtn) {
+          confirmBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+    }
+  }, [tempTrack, currentView]);
 
   // Load feed from Firestore
   useEffect(() => {
@@ -671,6 +690,7 @@ export default function App() {
 
       <div className="flex flex-col gap-3">
         <button 
+          data-guide="confirm-track-btn"
           onClick={() => {
             if (tempTrack) {
               const targetLevel = getLevelForTrack(tempTrack, state.unlockedBadges);
@@ -829,7 +849,13 @@ export default function App() {
           )}
 
           {/* Quick Track Switcher (Senior Friendly) */}
-          <div className="mb-6 bg-white/95 backdrop-blur-md rounded-[28px] p-4.5 shadow-soft border border-gray-line/40 flex items-center justify-between gap-4">
+          <div 
+            data-guide="switcher-card"
+            className={cn(
+              "mb-6 bg-white/95 backdrop-blur-md rounded-[28px] p-4.5 shadow-soft border border-gray-line/40 flex items-center justify-between gap-4 transition-all duration-300",
+              dashboardGuideStep === 2 ? "z-30 ring-4 ring-green-400 relative" : "z-10"
+            )}
+          >
             <div className="flex items-center gap-3">
               <div className={cn(
                 "w-12 h-12 rounded-2xl flex items-center justify-center text-3xl shrink-0 shadow-inner-soft",
@@ -858,6 +884,27 @@ export default function App() {
               <RefreshCw className="w-3.5 h-3.5" />
             </motion.button>
           </div>
+
+          {/* Inline Step 2 Tooltip */}
+          {dashboardGuideStep === 2 && (
+            <div className="mb-6 bg-white text-text-main p-5 rounded-3xl shadow-2xl z-30 border-2 border-green-main flex flex-col gap-3 relative animate-bounce-slow text-left">
+              <h4 className="font-black text-sm text-green-main flex items-center gap-1.5">
+                <span>🔄 第二步：隨時切換挑戰路線</span>
+              </h4>
+              <p className="text-xs text-text-sub font-semibold leading-relaxed">
+                這是你目前的挑戰路線。如果你想體驗其他路線（例如蔬食或淨塑），點選「<strong>切換路線</strong>」按鈕就能隨時切換，所有進度都會自動為你保留喔！
+              </p>
+              <button
+                onClick={() => {
+                  playSound('click');
+                  setDashboardGuideStep(3);
+                }}
+                className="bg-green-main text-white font-black py-2.5 rounded-xl text-xs btn-active flex items-center justify-center gap-1"
+              >
+                <span>我知道了，下一個說明 ➔</span>
+              </button>
+            </div>
+          )}
 
           {/* Level Card */}
           <div id="tutorial-step1-card" className="bg-white rounded-3xl p-5 shadow-float mb-8 border border-white">
@@ -989,7 +1036,7 @@ export default function App() {
               data-guide="task-card"
               className={cn(
                 "bg-white rounded-[32px] p-6 shadow-soft relative overflow-hidden group border-l-[6px] transition-all duration-300",
-                dashboardGuideStep === 2 ? "z-30 ring-4 ring-green-main" : "z-10"
+                dashboardGuideStep === 3 ? "z-30 ring-4 ring-green-main" : "z-10"
               )}
               style={{ borderColor: tc }}
             >
@@ -1018,11 +1065,11 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* Inline Step 2 Tooltip */}
-          {dashboardGuideStep === 2 && (
+          {/* Inline Step 3 Tooltip */}
+          {dashboardGuideStep === 3 && (
             <div className="mt-4 bg-white text-text-main p-5 rounded-3xl shadow-2xl z-30 border-2 border-[#9FD356] flex flex-col gap-3 relative animate-bounce-slow text-left">
               <h4 className="font-black text-sm text-green-main flex items-center gap-1.5">
-                <span>🎯 第二步：點選挑戰關卡</span>
+                <span>🎯 第三步：點選挑戰關卡</span>
               </h4>
               <p className="text-xs text-text-sub font-semibold leading-relaxed">
                 這裡是您的主線任務與目前關卡。點選「<strong>前往挑戰地圖</strong>」按鈕，就可以進入地圖開啟第一個日常環保實踐打卡囉！
@@ -1035,7 +1082,7 @@ export default function App() {
                 }}
                 className="bg-text-main text-white font-black py-2.5 rounded-xl text-xs btn-active flex items-center justify-center gap-1"
               >
-                <span>太棒了，開始挑戰！ 🎉</span>
+                <span>我知道了，完成教學 🎉</span>
               </button>
             </div>
           )}
