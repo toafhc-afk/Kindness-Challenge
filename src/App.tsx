@@ -2572,6 +2572,44 @@ export default function App() {
           transition={{ type: 'spring', damping: 25, stiffness: 400 }}
           ref={scrollContainerRef}
           onScroll={handleScroll}
+          onAnimationComplete={() => {
+            if (currentView === 'map') {
+              const activeNode = document.querySelector('[data-guide="active-level-node"]');
+              if (activeNode) {
+                smoothScrollToElement(activeNode, 'center');
+              } else {
+                if (scrollContainerRef.current) {
+                  scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+                }
+              }
+            } else if (currentView === 'checkin') {
+              if (checkinGuideStep === 1) {
+                const checklistSection = document.querySelector('[data-guide="checkin-checklist"]');
+                if (checklistSection) {
+                  smoothScrollToElement(checklistSection, 'center');
+                }
+              } else if (checkinGuideStep === 2) {
+                const submitBtn = document.querySelector('[data-guide="checkin-submit-btn"]');
+                if (submitBtn) {
+                  smoothScrollToElement(submitBtn, 'center');
+                }
+              }
+            } else if (currentView === 'profile') {
+              if (profileGuideStep === 1) {
+                const newBadge = document.querySelector('[data-guide="new-unlocked-badge"]');
+                if (newBadge) {
+                  smoothScrollToElement(newBadge, 'center');
+                }
+              }
+            } else if (currentView === 'dashboard') {
+              if (dashboardGuideStep === 1) {
+                const forestCard = document.querySelector('[data-guide="forest-card"]');
+                if (forestCard) {
+                  smoothScrollToElement(forestCard, 'center');
+                }
+              }
+            }
+          }}
           className="flex-1 overflow-y-auto hide-scrollbar pb-[calc(7.5rem+env(safe-area-inset-bottom,0px))]"
         >
           {currentView === 'preview' && renderPreviewView()}
@@ -2584,6 +2622,20 @@ export default function App() {
           {currentView === 'admin' && <AdminView />}
         </motion.div>
       </AnimatePresence>
+
+      {checkinIsUploading && (
+        <div className="absolute inset-0 z-[120] bg-black/60 backdrop-blur-md flex flex-col items-center justify-center gap-4 text-white p-8 text-center pointer-events-auto rounded-b-none">
+          <motion.div 
+            animate={{ rotate: 360 }} 
+            transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }} 
+            className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full shadow-float" 
+          />
+          <h3 className="font-black text-lg tracking-tight mt-2 animate-pulse">正在上傳您的環保打卡...</h3>
+          <p className="text-xs text-white/70 leading-relaxed max-w-[240px]">
+            我們正在幫您將照片壓縮上傳至綠色雲端，並累積減碳 EXP 經驗值！請稍候一下喔 🌳
+          </p>
+        </div>
+      )}
 
       <nav id="bottom-nav" className={cn(
         "absolute bottom-0 left-0 w-full h-[calc(6rem+env(safe-area-inset-bottom,0px))] pb-[env(safe-area-inset-bottom,0px)] bg-white/95 backdrop-blur-xl border-t border-gray-line/50 flex justify-around items-center px-4 z-40 transition-all duration-500",
