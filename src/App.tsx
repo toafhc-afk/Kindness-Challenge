@@ -139,6 +139,7 @@ export default function App() {
   const [profileTab, setProfileTab] = useState<'badges' | 'settings'>('badges');
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [quizRecommendation, setQuizRecommendation] = useState<Track | null>(null);
+  const [dashboardGuideStep, setDashboardGuideStep] = useState<number | null>(null);
 
   // Map interactive state
   const [selectedMapTaskIndex, setSelectedMapTaskIndex] = useState<number | null>(null);
@@ -260,6 +261,18 @@ export default function App() {
       setCurrentView('preview'); // Set base view behind full-screen onboarding
     }
   }, [user, localState, firebaseState, showTutorialModal]);
+
+  // Trigger step-by-step dashboard guide for beginners
+  useEffect(() => {
+    if (currentView === 'dashboard' && state && state.level === 1 && state.checkInCount === 0) {
+      const hasSeenDashboardGuide = localStorage.getItem(`seen_db_guide_${state.track}`);
+      if (!hasSeenDashboardGuide) {
+        setDashboardGuideStep(1);
+      }
+    } else {
+      setDashboardGuideStep(null);
+    }
+  }, [currentView, state]);
 
   // Load feed from Firestore
   useEffect(() => {
@@ -703,8 +716,11 @@ export default function App() {
       : 'from-[#FFF0D0]';
 
     return (
-      <div className="flex flex-col min-h-full bg-white-main">
-        <div className={`bg-gradient-to-b ${heroGrad} to-white-main px-6 pt-10 pb-8 rounded-b-[40px] shadow-sm`}>
+      <div className="flex flex-col min-h-full bg-white-main relative">
+        {dashboardGuideStep !== null && (
+          <div className="absolute inset-0 bg-black/60 z-20 pointer-events-auto rounded-b-[40px] rounded-t-none" />
+        )}
+        <div className={`bg-gradient-to-b ${heroGrad} to-white-main px-6 pt-10 pb-8 rounded-b-[40px] shadow-sm relative`}>
           <div className="flex justify-between items-center mb-8">
             <div>
               <h2 className="text-2xl font-black text-text-main flex items-center gap-2 tracking-tight">
@@ -731,7 +747,10 @@ export default function App() {
           </div>
 
           {/* Global Forest Progress Bar Widget */}
-          <div className="mb-6 bg-gradient-to-r from-emerald-800 to-emerald-950 rounded-[28px] p-5 text-white shadow-float relative overflow-hidden border border-emerald-700/30">
+          <div className={cn(
+            "mb-6 bg-gradient-to-r from-emerald-800 to-emerald-950 rounded-[28px] p-5 text-white shadow-float relative overflow-hidden border border-emerald-700/30 transition-all duration-300",
+            dashboardGuideStep === 1 ? "z-30 ring-4 ring-green-400" : "z-10"
+          )}>
             {/* Background elements */}
             <div className="absolute right-[-20px] bottom-[-20px] text-8xl opacity-15 select-none pointer-events-none">🌳</div>
             <div className="relative z-10 text-left">
@@ -762,6 +781,27 @@ export default function App() {
               </p>
             </div>
           </div>
+
+          {/* Inline Step 1 Tooltip */}
+          {dashboardGuideStep === 1 && (
+            <div className="mb-6 bg-white text-text-main p-5 rounded-3xl shadow-2xl z-30 border-2 border-green-main flex flex-col gap-3 relative animate-bounce-slow text-left">
+              <h4 className="font-black text-sm text-green-main flex items-center gap-1.5">
+                <span>🌲 第一步：認識公益造林目標</span>
+              </h4>
+              <p className="text-xs text-text-sub font-semibold leading-relaxed">
+                這是我們大家的共同目標！每當我們累積減碳達 <strong>200 kg</strong>，慈心就會在地球為大家種下一棵實體真樹！一起加油！🌲
+              </p>
+              <button
+                onClick={() => {
+                  playSound('click');
+                  setDashboardGuideStep(2);
+                }}
+                className="bg-green-main text-white font-black py-2.5 rounded-xl text-xs btn-active flex items-center justify-center gap-1"
+              >
+                <span>我知道了，下一個說明 ➔</span>
+              </button>
+            </div>
+          )}
 
           {/* Quick Track Switcher (Senior Friendly) */}
           <div className="mb-6 bg-white/95 backdrop-blur-md rounded-[28px] p-4.5 shadow-soft border border-gray-line/40 flex items-center justify-between gap-4">
@@ -921,7 +961,10 @@ export default function App() {
           ) : (
             <motion.div 
               whileHover={{ scale: 1.02 }}
-              className="bg-white rounded-[32px] p-6 shadow-soft relative overflow-hidden group border-l-[6px]"
+              className={cn(
+                "bg-white rounded-[32px] p-6 shadow-soft relative overflow-hidden group border-l-[6px] transition-all duration-300",
+                dashboardGuideStep === 2 ? "z-30 ring-4 ring-green-main" : "z-10"
+              )}
               style={{ borderColor: tc }}
             >
               <div className="absolute -right-6 -top-6 text-8xl opacity-[0.03] group-hover:scale-110 transition-transform">🎯</div>
@@ -947,6 +990,28 @@ export default function App() {
                 前往挑戰地圖 <ChevronRight className="w-4 h-4" />
               </motion.button>
             </motion.div>
+          )}
+
+          {/* Inline Step 2 Tooltip */}
+          {dashboardGuideStep === 2 && (
+            <div className="mt-4 bg-white text-text-main p-5 rounded-3xl shadow-2xl z-30 border-2 border-[#9FD356] flex flex-col gap-3 relative animate-bounce-slow text-left">
+              <h4 className="font-black text-sm text-green-main flex items-center gap-1.5">
+                <span>🎯 第二步：點選挑戰關卡</span>
+              </h4>
+              <p className="text-xs text-text-sub font-semibold leading-relaxed">
+                這裡是您的主線任務與目前關卡。點選「<strong>前往挑戰地圖</strong>」按鈕，就可以進入地圖開啟第一個日常環保實踐打卡囉！
+              </p>
+              <button
+                onClick={() => {
+                  playSound('success');
+                  setDashboardGuideStep(null);
+                  localStorage.setItem(`seen_db_guide_${state.track}`, 'true');
+                }}
+                className="bg-text-main text-white font-black py-2.5 rounded-xl text-xs btn-active flex items-center justify-center gap-1"
+              >
+                <span>太棒了，開始挑戰！ 🎉</span>
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -2215,7 +2280,8 @@ export default function App() {
 
       <nav id="bottom-nav" className={cn(
         "absolute bottom-0 left-0 w-full h-[calc(6rem+env(safe-area-inset-bottom,0px))] pb-[env(safe-area-inset-bottom,0px)] bg-white/95 backdrop-blur-xl border-t border-gray-line/50 flex justify-around items-center px-4 z-40 transition-all duration-500",
-        ['preview', 'select'].includes(currentView) || (!isNavVisible && currentView !== 'map') ? "translate-y-full opacity-0" : "translate-y-0 opacity-100"
+        ['preview', 'select'].includes(currentView) || (!isNavVisible && currentView !== 'map') ? "translate-y-full opacity-0" : "translate-y-0 opacity-100",
+        dashboardGuideStep !== null ? "pointer-events-none opacity-20 filter grayscale" : ""
       )}>
         <NavItem active={currentView === 'dashboard'} onClick={() => handleNav('dashboard')} icon={<Home />} label="首頁" />
         <NavItem active={currentView === 'map'} onClick={() => handleNav('map')} icon={<MapIcon />} label="地圖" />
