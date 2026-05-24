@@ -164,12 +164,47 @@ export default function App() {
   const [checkinGuideStep, setCheckinGuideStep] = useState<number | null>(null);
   const [profileGuideStep, setProfileGuideStep] = useState<number | null>(null);
 
-  // Helper for centering elements inside scrollable container
-  const smoothScrollToElement = (element: Element | null, block: 'center' | 'top' = 'center') => {
-    const container = scrollContainerRef.current;
-    if (!container || !element) return;
+  // Helper for centering elements inside scrollable container with retry fallback for lazy render
+  const smoothScrollToElement = (elementOrSelector: Element | string | null, block: 'center' | 'top' = 'center', retryCount = 0) => {
+    let element: Element | null = null;
+    if (typeof elementOrSelector === 'string') {
+      element = document.querySelector(elementOrSelector);
+    } else {
+      element = elementOrSelector;
+    }
+
+    if (!element) {
+      if (retryCount < 15 && typeof elementOrSelector === 'string') {
+        setTimeout(() => {
+          smoothScrollToElement(elementOrSelector, block, retryCount + 1);
+        }, 80);
+      }
+      return;
+    }
+
+    const container = element.closest('.overflow-y-auto') as HTMLDivElement | null;
+    if (!container) {
+      if (retryCount < 15) {
+        setTimeout(() => {
+          smoothScrollToElement(element, block, retryCount + 1);
+        }, 80);
+      }
+      return;
+    }
+
     const containerRect = container.getBoundingClientRect();
     const elementRect = element.getBoundingClientRect();
+    
+    // If layout hasn't settled yet (rect width/height are 0), retry
+    if (elementRect.height === 0 || containerRect.height === 0) {
+      if (retryCount < 15) {
+        setTimeout(() => {
+          smoothScrollToElement(element, block, retryCount + 1);
+        }, 80);
+      }
+      return;
+    }
+
     const relativeTop = elementRect.top - containerRect.top + container.scrollTop;
     let targetScrollTop = relativeTop;
     if (block === 'center') {
@@ -2592,7 +2627,7 @@ export default function App() {
       {profileGuideStep === 2 && (
         <>
           <div className="absolute inset-0 bg-black/45 z-35 pointer-events-auto" />
-          <div className="absolute bottom-[calc(7rem+env(safe-area-inset-bottom,0px))] left-6 right-6 bg-white text-text-main p-5 rounded-3xl shadow-2xl z-50 border-2 border-[#9FD356] flex flex-col gap-3 relative animate-bounce-slow text-left">
+          <div className="absolute bottom-[calc(7rem+env(safe-area-inset-bottom,0px))] left-6 right-6 bg-white text-text-main p-5 rounded-3xl shadow-2xl z-50 border-2 border-[#9FD356] flex flex-col gap-3 animate-bounce-slow text-left">
             <h4 className="font-black text-sm text-green-main flex items-center gap-1.5">
               <span>🌍 第二步：去「探索動態」看大家的打卡！</span>
             </h4>
