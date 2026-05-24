@@ -722,7 +722,10 @@ export default function App() {
         {dashboardGuideStep !== null && (
           <div className="absolute inset-0 bg-black/60 z-20 pointer-events-auto rounded-b-[40px] rounded-t-none" />
         )}
-        <div className={`bg-gradient-to-b ${heroGrad} to-white-main px-6 pt-10 pb-8 rounded-b-[40px] shadow-sm relative`}>
+        <div className={cn(
+          `bg-gradient-to-b ${heroGrad} to-white-main px-6 pt-10 pb-8 rounded-b-[40px] shadow-sm relative transition-all duration-300`,
+          dashboardGuideStep === 1 ? "z-30" : "z-10"
+        )}>
           <div className="flex justify-between items-center mb-8">
             <div>
               <h2 className="text-2xl font-black text-text-main flex items-center gap-2 tracking-tight">
@@ -881,7 +884,10 @@ export default function App() {
           )}
         </div>
 
-        <div className="px-6 py-8">
+        <div className={cn(
+          "px-6 py-8 relative transition-all duration-300",
+          dashboardGuideStep === 2 ? "z-30" : "z-10"
+        )}>
           {/* Current Task or Complete Celebration */}
           {state.unlockedBadges.includes(`${track}_complete`) ? (
             <motion.div 
