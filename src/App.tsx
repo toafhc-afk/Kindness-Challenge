@@ -99,6 +99,27 @@ export default function App() {
   // Local state for UI responsiveness, initialized from Firebase if available
   const [localState, setLocalState] = useState<AppState | null>(null);
   
+  const defaultState: AppState = {
+    hasSeenPreview: false,
+    track: null,
+    level: 1,
+    exp: 0,
+    streak: 0,
+    checkInCount: 0,
+    co2Saved: 0,
+    unlockedBadges: [],
+    badgeUnlockDates: {},
+    claimedRewards: [],
+    lastCheckInDate: null,
+    hasCompletedTutorial: false,
+  };
+
+  const state = { ...defaultState, ...(localState || firebaseState || {}) };
+  // Ensure nested objects are initialized if undefined in existing state
+  if (!state.badgeUnlockDates) state.badgeUnlockDates = {};
+  if (!state.claimedRewards) state.claimedRewards = [];
+  if (!state.unlockedBadges) state.unlockedBadges = [];
+
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [tempTrack, setTempTrack] = useState<Track | null>(null);
   const [previewTab, setPreviewTab] = useState<'veg' | 'plastic'>('veg');
@@ -310,26 +331,7 @@ export default function App() {
     }
   }, [showRewardModal, user]);
 
-  const defaultState: AppState = {
-    hasSeenPreview: false,
-    track: null,
-    level: 1,
-    exp: 0,
-    streak: 0,
-    checkInCount: 0,
-    co2Saved: 0,
-    unlockedBadges: [],
-    badgeUnlockDates: {},
-    claimedRewards: [],
-    lastCheckInDate: null,
-    hasCompletedTutorial: false,
-  };
 
-  const state = { ...defaultState, ...(localState || firebaseState || {}) };
-  // Ensure nested objects are initialized if undefined in existing state
-  if (!state.badgeUnlockDates) state.badgeUnlockDates = {};
-  if (!state.claimedRewards) state.claimedRewards = [];
-  if (!state.unlockedBadges) state.unlockedBadges = [];
 
   const updateFirebaseState = async (updates: Partial<AppState>) => {
     if (!user) return;
