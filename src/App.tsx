@@ -220,6 +220,18 @@ export default function App() {
     }
   }, [firebaseState]);
 
+  // Global click event listener to automatically play sound/vibration on any button tap (cross-device compatibility)
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('button') || target.closest('[role="button"]') || target.closest('.btn-active')) {
+        playSound('click');
+      }
+    };
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, []);
+
   // Initial routing logic: Auto-switch based on user state
   useEffect(() => {
     if (!authLoading && user) {
