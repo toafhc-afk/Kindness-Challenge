@@ -161,6 +161,7 @@ export default function App() {
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [quizRecommendation, setQuizRecommendation] = useState<Track | null>(null);
   const [dashboardGuideStep, setDashboardGuideStep] = useState<number | null>(null);
+  const [checkinGuideStep, setCheckinGuideStep] = useState<number | null>(null);
 
   // Map interactive state
   const [selectedMapTaskIndex, setSelectedMapTaskIndex] = useState<number | null>(null);
@@ -333,6 +334,51 @@ export default function App() {
       }, 150);
     }
   }, [tempTrack, currentView]);
+
+  // Trigger step-by-step check-in guide for beginners
+  useEffect(() => {
+    if (currentView === 'checkin' && state && state.level === 1 && state.checkInCount === 0) {
+      const hasSeenCheckinGuide = localStorage.getItem(`seen_checkin_guide_${state.track}`);
+      if (!hasSeenCheckinGuide && checkinGuideStep === null) {
+        setCheckinGuideStep(1);
+      }
+    } else {
+      setCheckinGuideStep(null);
+    }
+  }, [currentView, state, checkinGuideStep]);
+
+  // Smooth scroll to checkin guide elements
+  useEffect(() => {
+    if (checkinGuideStep === 1) {
+      setTimeout(() => {
+        const checklistSection = document.querySelector('[data-guide="checkin-checklist"]');
+        if (checklistSection) {
+          checklistSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 100);
+    } else if (checkinGuideStep === 2) {
+      setTimeout(() => {
+        const submitBtn = document.querySelector('[data-guide="checkin-submit-btn"]');
+        if (submitBtn) {
+          submitBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
+  }, [checkinGuideStep]);
+
+  // Smooth scroll to the active level node when entering the map view
+  useEffect(() => {
+    if (currentView === 'map') {
+      setTimeout(() => {
+        const activeNode = document.querySelector('[data-guide="active-level-node"]');
+        if (activeNode) {
+          activeNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+    }
+  }, [currentView]);
 
   // Load feed from Firestore
   useEffect(() => {
@@ -1154,6 +1200,7 @@ export default function App() {
             return (
               <motion.div 
                 key={task.id}
+                data-guide={status === 'active' ? "active-level-node" : undefined}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 whileHover={status !== 'locked' ? { scale: 1.04 } : {}}
@@ -1550,7 +1597,10 @@ export default function App() {
     const theme = isTrackCompleted ? endlessTheme : (levelThemes[Math.min(state.level - 1, 3)] || levelThemes[0]);
 
     return (
-      <div className="px-6 py-8 min-h-full flex flex-col pt-12">
+      <div className="px-6 py-8 min-h-full flex flex-col pt-12 relative">
+        {checkinGuideStep !== null && (
+          <div className="absolute inset-0 bg-black/45 z-25 pointer-events-auto rounded-b-[40px] rounded-t-none" />
+        )}
         <h2 className="text-2xl font-black text-text-main mb-8 flex items-center gap-2 tracking-tight">
           打卡任務 <span className="text-3xl">📸</span>
         </h2>
@@ -1601,7 +1651,14 @@ export default function App() {
 
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
           {task.checklist && task.checklist.length > 0 && (
-            <div id="tutorial-step5-checklist" className="mb-6 bg-white border border-gray-line p-5 rounded-3xl shadow-soft">
+            <div 
+              data-guide="checkin-checklist"
+              id="tutorial-step5-checklist" 
+              className={cn(
+                "mb-6 bg-white border border-gray-line p-5 rounded-3xl shadow-soft transition-all duration-300",
+                checkinGuideStep === 1 ? "z-30 ring-4 ring-green-main relative" : ""
+              )}
+            >
               <label className="block text-xs font-black text-text-sub uppercase tracking-wider mb-3">
                 📋 關卡實踐項目（請勾選至少一項）
               </label>
@@ -1647,7 +1704,13 @@ export default function App() {
             </div>
           )}
 
-          <div className="mb-6">
+          <div 
+            data-guide="checkin-textarea"
+            className={cn(
+              "mb-6 transition-all duration-300",
+              checkinGuideStep === 1 ? "z-30 ring-4 ring-green-main p-3 bg-white rounded-[24px] relative" : ""
+            )}
+          >
             <label className="block text-sm font-black text-text-main mb-3">今天做了什麼？有什麼感受？</label>
             <textarea 
               value={checkinText}
@@ -1658,6 +1721,28 @@ export default function App() {
               required
             />
           </div>
+
+          {/* Inline Step 1 Tooltip for Check-in */}
+          {checkinGuideStep === 1 && (
+            <div className="mb-6 bg-white text-text-main p-5 rounded-3xl shadow-2xl z-30 border-2 border-green-main flex flex-col gap-3 relative animate-bounce-slow text-left">
+              <h4 className="font-black text-sm text-green-main flex items-center gap-1.5">
+                <span>📋 第一步：勾選項目並寫下感受</span>
+              </h4>
+              <p className="text-xs text-text-sub font-semibold leading-relaxed">
+                點擊上方勾選您今天完成的實踐項目，並在輸入框中寫下心得。我們已經幫您填寫了實用範例，您隨時可以直接送出或修改！
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  playSound('click');
+                  setCheckinGuideStep(2);
+                }}
+                className="bg-green-main text-white font-black py-2.5 rounded-xl text-xs btn-active flex items-center justify-center gap-1"
+              >
+                <span>我知道了，下一個說明 ➔</span>
+              </button>
+            </div>
+          )}
           
           <div className="mb-10">
             <label className="block text-sm font-black text-text-main mb-3">上傳照片 (選填)</label>
@@ -1688,7 +1773,13 @@ export default function App() {
             </label>
           </div>
 
-          <div className="mt-auto">
+          <div 
+            data-guide="checkin-submit-btn"
+            className={cn(
+              "mt-auto transition-all duration-300",
+              checkinGuideStep === 2 ? "z-30 ring-4 ring-green-main relative bg-white p-2 rounded-2xl" : ""
+            )}
+          >
             <button 
               type="submit" 
               disabled={checkinIsUploading || (task.checklist && task.checklist.length > 0 && checkinSelectedOptions.length === 0)}
@@ -1709,6 +1800,29 @@ export default function App() {
               ) : "送出打卡，獲得經驗值！"}
             </button>
           </div>
+
+          {/* Inline Step 2 Tooltip for Check-in */}
+          {checkinGuideStep === 2 && (
+            <div className="mb-8 bg-white text-text-main p-5 rounded-3xl shadow-2xl z-30 border-2 border-[#9FD356] flex flex-col gap-3 relative animate-bounce-slow text-left">
+              <h4 className="font-black text-sm text-green-main flex items-center gap-1.5">
+                <span>🚀 第二步：送出打卡累積進度</span>
+              </h4>
+              <p className="text-xs text-text-sub font-semibold leading-relaxed">
+                確認勾選與心得後，點擊這個按鈕即可送出。送出後將會為您解鎖關卡徽章、獲得經驗值，同時推進全站公益造林計畫喔！
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  playSound('success');
+                  setCheckinGuideStep(null);
+                  localStorage.setItem(`seen_checkin_guide_${state.track}`, 'true');
+                }}
+                className="bg-text-main text-white font-black py-2.5 rounded-xl text-xs btn-active flex items-center justify-center gap-1"
+              >
+                <span>我知道了，完成教學 🎉</span>
+              </button>
+            </div>
+          )}
         </form>
       </div>
     );
