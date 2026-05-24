@@ -31,6 +31,20 @@ let lastPlayTime = 0;
 
 export const playSound = (type: 'click' | 'success' | 'unlock' | 'levelup') => {
   try {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      if (type === 'click') {
+        navigator.vibrate(15);
+      } else if (type === 'success') {
+        navigator.vibrate([15, 45, 15]);
+      } else if (type === 'unlock' || type === 'levelup') {
+        navigator.vibrate([30, 50, 30]);
+      }
+    }
+  } catch (vibrateErr) {
+    // Ignore haptic errors if blocked or not supported on this platform
+  }
+
+  try {
     const ctx = getAudioContext();
     if (!ctx) return;
     

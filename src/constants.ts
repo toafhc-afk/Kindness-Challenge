@@ -169,3 +169,61 @@ export const MOCK_FEED = [
   { id: 2, name: '阿豪', avatar: '2', track: 'plastic' as Track, time: '1小時前', text: '買飲料自備杯子，省了5元還少用一個塑膠杯，讚讚！', likes: 8 },
   { id: 3, name: '小宇', avatar: '3', track: 'dual' as Track, time: '3小時前', text: '早午餐吃全素三明治＋自備餐盒裝點心，完美的一天。', likes: 25 }
 ];
+
+export interface RandomTask {
+  id: string;
+  title: string;
+  desc: string;
+  fullDesc: string;
+  icon: string;
+  co2Saved: number;
+  checklist: string[];
+}
+
+export const DAILY_RANDOM_TASKS: RandomTask[] = [
+  {
+    id: 'd1',
+    title: '🥤 一日無吸管挑戰',
+    desc: '直接口對杯喝飲料，拒絕塑膠吸管',
+    fullDesc: '今天購買或飲用任何手搖飲、咖啡或包裝飲料時，直接就口飲用，拒絕使用一次性塑膠吸管。',
+    icon: '🥤',
+    co2Saved: 0.1,
+    checklist: ['購買飲料時拒絕了店家提供的吸管', '直接以杯就口享用飲品', '提醒身邊的人也可以口對杯喝飲料']
+  },
+  {
+    id: 'd2',
+    title: '🍛 珍惜食物，光盤行動',
+    desc: '三餐點餐量力而行，不浪費食物',
+    fullDesc: '減少廚餘是很好的碳中和行為。今天每一餐都把點的飯菜吃光光，珍惜大自然與農夫的恩賜！',
+    icon: '🍛',
+    co2Saved: 0.25,
+    checklist: ['點餐時量力而行，不點過量的食物', '餐點全部享用完畢，不留下任何廚餘', '吃不完的餐點自備便當盒打包帶走']
+  },
+  {
+    id: 'd3',
+    title: '🔌 拔掉多餘待機電源',
+    desc: '拔除暫時不用的電器插頭，省電減碳',
+    fullDesc: '檢查家中或辦公室，將長期待機但未使用的電器（如微波爐、電視、充電器）插頭拔除，節省不必要的微量耗電。',
+    icon: '🔌',
+    co2Saved: 0.15,
+    checklist: ['拔掉充電完畢的手機/電腦充電器插頭', '隨手關閉不使用的電器電源開關', '拔除暫時用不到的待機電器插頭']
+  },
+  {
+    id: 'd4',
+    title: '🥗 蔬食減碳星期一',
+    desc: '多吃一餐綠色低碳的植物性料理',
+    fullDesc: '挑戰今天中午或晚餐多嘗試一餐美味的全蔬食餐，少吃肉類，為身體與地球環保減輕負擔。',
+    icon: '🥗',
+    co2Saved: 0.3,
+    checklist: ['選擇了清爽健康的天然全蔬食便當', '不吃含有加工肉製品的餐點', '細細品嚐並感恩蔬菜的甘甜美味']
+  },
+  {
+    id: 'd5',
+    title: '🍎 散步去買在地小農食材',
+    desc: '支持當季在地食材，縮短食物里程',
+    fullDesc: '到市場購物時，挑選在地小農生產的當季新鮮蔬果，並以步行或騎單車代替騎車，減少燃油碳排。',
+    icon: '🍎',
+    co2Saved: 0.2,
+    checklist: ['挑選了台灣本地生產的當季新鮮食材', '拒絕購買包裝層層堆疊的進口水果', '以步行或單車方式前往市場採買']
+  }
+];

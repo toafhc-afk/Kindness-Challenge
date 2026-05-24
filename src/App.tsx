@@ -38,11 +38,22 @@ import { useAuth } from './lib/AuthContext';
 import { loginWithGoogle, loginAnonymously, googleProvider, auth, db, storage } from './lib/firebase';
 import { signOut, linkWithPopup } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit, onSnapshot, deleteDoc, arrayUnion } from 'firebase/firestore';
-import { TRACK_DATA, LEVELS_EXP_REQ, TITLES, TITLES_BY_TRACK, BADGES } from './constants';
+import { TRACK_DATA, LEVELS_EXP_REQ, TITLES, TITLES_BY_TRACK, BADGES, DAILY_RANDOM_TASKS } from './constants';
 import { View, Track, Task, AppState, Badge } from './types';
 import { cn, calculateLevel, getLevelForTrack } from './lib/utils';
 import { generateCertificate } from './lib/certificate';
 import { playSound, unlockAudio } from './lib/sound';
+
+// Helper to fetch stable daily random task index based on date string
+const getDailyTask = () => {
+  const dayStr = new Date().toDateString();
+  let hash = 0;
+  for (let i = 0; i < dayStr.length; i++) {
+    hash = dayStr.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const idx = Math.abs(hash) % DAILY_RANDOM_TASKS.length;
+  return DAILY_RANDOM_TASKS[idx];
+};
 
 
 enum OperationType {
@@ -126,6 +137,8 @@ export default function App() {
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   const [tutorialSlide, setTutorialSlide] = useState(0);
   const [profileTab, setProfileTab] = useState<'badges' | 'settings'>('badges');
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const [quizRecommendation, setQuizRecommendation] = useState<Track | null>(null);
 
   // Map interactive state
   const [selectedMapTaskIndex, setSelectedMapTaskIndex] = useState<number | null>(null);
@@ -226,14 +239,15 @@ export default function App() {
     }
   }, [authLoading, user, firebaseState]);
 
-  // Trigger tutorial modal if not completed yet
+  // Trigger tutorial modal if not completed yet (pops up immediately after login, before track selection)
   useEffect(() => {
     const stateToUse = localState || firebaseState;
-    if (user && stateToUse && stateToUse.track && !stateToUse.hasCompletedTutorial && !showTutorialModal && currentView === 'dashboard') {
+    if (user && stateToUse && !stateToUse.hasCompletedTutorial && !showTutorialModal) {
       setShowTutorialModal(true);
       setTutorialSlide(0);
+      setCurrentView('preview'); // Set base view behind full-screen onboarding
     }
-  }, [user, localState, firebaseState, currentView, showTutorialModal]);
+  }, [user, localState, firebaseState, showTutorialModal]);
 
   // Load feed from Firestore
   useEffect(() => {
@@ -504,7 +518,17 @@ export default function App() {
   const renderSelectView = () => (
     <div className="px-6 py-8">
       <h1 className="text-2xl font-black text-text-main mb-2">選擇你的挑戰軌道</h1>
-      <p className="text-sm text-text-sub mb-8 font-medium">選擇適合你的路線，開啟你的永續旅程！</p>
+      <p className="text-sm text-text-sub mb-3 font-medium">選擇適合你的路線，開啟你的永續旅程！</p>
+
+      <button
+        onClick={() => {
+          playSound('click');
+          setShowQuizModal(true);
+        }}
+        className="w-full mb-6 py-3 px-4 bg-green-light border border-green-main/20 text-green-main rounded-2xl text-xs font-black flex items-center justify-center gap-2 hover:bg-green-light/80 transition-all btn-active"
+      >
+        🔍 不知道該選哪一個？點我 3 秒快速測驗！
+      </button>
 
       <div className="space-y-4 mb-8">
         {(['veg', 'plastic', 'dual'] as Track[]).map((t) => {
@@ -536,6 +560,10 @@ export default function App() {
               ) : t === 'dual' ? (
                 <div className="absolute top-0 right-0 bg-[#FFD166] text-text-main text-[10px] font-black px-4 py-1.5 rounded-bl-xl shadow-sm">
                   最高榮耀 👑
+                </div>
+              ) : quizRecommendation === t ? (
+                <div className="absolute top-0 right-0 bg-green-main text-white text-[9px] font-black px-3 py-1.5 rounded-bl-xl shadow-sm animate-pulse flex items-center gap-0.5 z-10">
+                  ✨ 推薦起點
                 </div>
               ) : null}
               <div className={cn(
@@ -635,6 +663,11 @@ export default function App() {
     );
     const influencePartners = (state.checkInCount * 3) + totalLikes + uniqueCommenters.size;
 
+    // Compute Global Carbon Offset for the tree planting progress
+    const localTotalSaved = globalFeed.reduce((acc, p) => acc + (p.co2Saved || 0), 0);
+    const baseCO2 = 824.5;
+    const totalGlobalCO2 = parseFloat((baseCO2 + localTotalSaved).toFixed(1));
+
     // Track-specific theme colors
     const trackData = TRACK_DATA[track];
     const tc = trackData.themeColor;   // e.g. '#9FD356' / '#3C91E6' / '#FF9F1C'
@@ -671,6 +704,39 @@ export default function App() {
             >
               <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${state.track || 'anon'}&backgroundColor=transparent`} alt="Avatar" />
             </motion.div>
+          </div>
+
+          {/* Global Forest Progress Bar Widget */}
+          <div className="mb-6 bg-gradient-to-r from-emerald-800 to-emerald-950 rounded-[28px] p-5 text-white shadow-float relative overflow-hidden border border-emerald-700/30">
+            {/* Background elements */}
+            <div className="absolute right-[-20px] bottom-[-20px] text-8xl opacity-15 select-none pointer-events-none">🌳</div>
+            <div className="relative z-10 text-left">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[9px] font-black tracking-widest bg-emerald-700/60 text-emerald-200 px-2 py-0.5 rounded-full uppercase">
+                  🌳 全站綠色造林計畫
+                </span>
+                <span className="text-[10px] font-black text-emerald-300">
+                  已種植 {Math.floor(totalGlobalCO2 / 200)} 棵實體樹
+                </span>
+              </div>
+              <h3 className="text-sm font-black tracking-tight leading-snug mb-2.5">
+                全站累計減碳 {totalGlobalCO2} kg
+              </h3>
+              
+              {/* Progress Bar Container */}
+              <div className="w-full bg-emerald-950/60 rounded-full h-3 p-0.5 border border-emerald-800/40 mb-2">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${((totalGlobalCO2 % 200) / 200) * 100}%` }}
+                  transition={{ type: 'spring', damping: 15 }}
+                  className="bg-gradient-to-r from-green-light to-emerald-400 h-full rounded-full"
+                />
+              </div>
+              
+              <p className="text-[9px] text-emerald-200/90 font-medium">
+                還差 <span className="font-black text-white">{(200 - (totalGlobalCO2 % 200)).toFixed(1)} kg</span> 減碳量，慈心就會在地球為大家種下第 <span className="font-black text-white">{Math.floor(totalGlobalCO2 / 200) + 1}</span> 棵真樹！
+              </p>
+            </div>
           </div>
 
           {/* Quick Track Switcher (Senior Friendly) */}
@@ -789,6 +855,7 @@ export default function App() {
                     </button>
                     <button 
                       onClick={() => {
+                        playSound('click');
                         setTempTrack(track);
                         setCurrentView('select');
                       }} 
@@ -799,6 +866,32 @@ export default function App() {
                     </button>
                   </>
                 )}
+
+                {/* Daily Endless Quest Card */}
+                <div className="mt-6 border-t border-dashed border-gray-line pt-6 text-left">
+                  <span className="text-[10px] font-black px-3 py-1.5 rounded-xl mb-3 inline-block uppercase tracking-widest bg-purple-100 text-purple-600 animate-pulse-slow">
+                    🌟 本日隨機修行
+                  </span>
+                  <div className="bg-[#F9F7FF] rounded-2xl p-4 border border-[#8B5CF6]/15 flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-[#ECE7FF] flex items-center justify-center text-2xl shrink-0">
+                      {getDailyTask().icon}
+                    </div>
+                    <div>
+                      <h4 className="font-black text-sm text-text-main leading-tight mb-1">{getDailyTask().title}</h4>
+                      <p className="text-[11px] text-text-sub font-semibold leading-normal">{getDailyTask().desc}</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      playSound('click');
+                      setCurrentView('checkin');
+                    }}
+                    className="w-full mt-3 bg-[#8B5CF6] hover:bg-[#7c4ee4] text-white font-black py-3.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-md btn-active transition-transform"
+                  >
+                    <span>實踐打卡此任務 (+20 EXP)</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </motion.div>
           ) : (
@@ -901,6 +994,8 @@ export default function App() {
                 key={task.id}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
+                whileHover={status !== 'locked' ? { scale: 1.04 } : {}}
+                whileTap={status !== 'locked' ? { scale: 0.92 } : {}}
                 viewport={{ once: true }}
                 className={cn(
                   "relative flex items-center cursor-pointer",
@@ -1055,8 +1150,20 @@ export default function App() {
 
   const renderCheckinView = () => {
     const track = state.track || 'veg';
+    const isTrackCompleted = state.unlockedBadges.includes(`${track}_complete`);
     const data = TRACK_DATA[track];
-    const task = data.tasks[Math.min(state.level - 1, 3)];
+    const dailyTask = getDailyTask();
+    const task = isTrackCompleted 
+      ? { 
+          id: 5, 
+          title: dailyTask.title, 
+          desc: dailyTask.desc, 
+          fullDesc: dailyTask.fullDesc, 
+          icon: dailyTask.icon, 
+          placeholder: '例如：今天完成了這個每日隨機挑戰！實踐了「' + dailyTask.title + '」，心裡感覺非常富足安祥，很有成就感！', 
+          checklist: dailyTask.checklist 
+        }
+      : data.tasks[Math.min(state.level - 1, 3)];
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -1086,8 +1193,12 @@ export default function App() {
         let mapUp = false;
 
         // Stats calculation
-        if (track === 'veg' || track === 'dual') newCo2Count += 0.8;
-        if (track === 'plastic' || track === 'dual') newCo2Count += 0.5;
+        if (isTrackCompleted) {
+          newCo2Count += dailyTask.co2Saved;
+        } else {
+          if (track === 'veg' || track === 'dual') newCo2Count += 0.8;
+          if (track === 'plastic' || track === 'dual') newCo2Count += 0.5;
+        }
         
         const today = new Date().toDateString();
         if (state.lastCheckInDate !== today) {
@@ -1096,7 +1207,7 @@ export default function App() {
 
         // Advance to next task (level) after every check-in
         const totalChecks = state.checkInCount + 1;
-        if (state.level < 4) {
+        if (!isTrackCompleted && state.level < 4) {
           newLevel += 1;
           newExp += 50; 
           mapUp = true;
@@ -1267,7 +1378,14 @@ export default function App() {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const levelThemesVeg = allTrackThemes.veg;
     const levelThemes = allTrackThemes[track] ?? allTrackThemes.veg;
-    const theme = levelThemes[Math.min(state.level - 1, 3)];
+    const endlessTheme = {
+      bg: 'from-[#ECE7FF] to-white border-[#8B5CF6]/30 bg-[#F9F7FF]', 
+      badge: 'bg-[#8B5CF6]/10 text-[#8B5CF6]', 
+      iconBg: 'bg-[#ECE7FF] border-[#8B5CF6]/10', 
+      title: '🌟 每日隨機修煉', 
+      shadow: 'shadow-[0_8px_30px_rgba(139,92,246,0.12)]'
+    };
+    const theme = isTrackCompleted ? endlessTheme : (levelThemes[Math.min(state.level - 1, 3)] || levelThemes[0]);
 
     return (
       <div className="px-6 py-8 min-h-full flex flex-col pt-12">
@@ -2513,15 +2631,89 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* Personality Quiz Modal */}
+      <AnimatePresence>
+        {showQuizModal && (
+          <div className="absolute inset-0 z-[160] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 pointer-events-auto">
+            <motion.div 
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              className="bg-white rounded-[36px] p-8 w-full max-w-[320px] text-center shadow-2xl border-4 border-white flex flex-col items-center relative"
+            >
+              <div className="text-4xl mb-4 animate-bounce">🔍</div>
+              <h3 className="font-black text-text-main text-lg mb-2">永續屬性快速檢測</h3>
+              <p className="text-xs text-text-sub font-semibold leading-relaxed mb-6">
+                選一個您日常生活中最容易做到的環保小事，我們為您推薦最適合的起點！
+              </p>
+              
+              <div className="flex flex-col gap-3 w-full">
+                <button 
+                  onClick={() => {
+                    setQuizRecommendation('veg');
+                    setTempTrack('veg');
+                    setShowQuizModal(false);
+                    playSound('success');
+                  }}
+                  className="w-full bg-[#EAF7ED] text-[#2D6A4F] border border-[#2D6A4F]/20 font-black py-4 rounded-2xl text-xs hover:bg-[#D8F3DC] transition-all btn-active"
+                >
+                  🍱 享用一頓美味的蔬食無肉餐
+                </button>
+                <button 
+                  onClick={() => {
+                    setQuizRecommendation('plastic');
+                    setTempTrack('plastic');
+                    setShowQuizModal(false);
+                    playSound('success');
+                  }}
+                  className="w-full bg-[#E8F1F5] text-[#1D3557] border border-[#1D3557]/20 font-black py-4 rounded-2xl text-xs hover:bg-[#D0E1EA] transition-all btn-active"
+                >
+                  🛍️ 出門自備購物袋或環保杯
+                </button>
+                <button 
+                  onClick={() => {
+                    const isDualUnlocked = getLevelForTrack('veg', state.unlockedBadges) >= 3 || getLevelForTrack('plastic', state.unlockedBadges) >= 3;
+                    if (isDualUnlocked) {
+                      setQuizRecommendation('dual');
+                      setTempTrack('dual');
+                      setShowQuizModal(false);
+                      playSound('success');
+                    } else {
+                      alert('🌟 雙軌並進是高難度任務，推薦您先從【蔬食任務】或【淨塑任務】開始修煉，很快就能解鎖雙軌喔！');
+                      setQuizRecommendation('veg');
+                      setTempTrack('veg');
+                      setShowQuizModal(false);
+                      playSound('success');
+                    }
+                  }}
+                  className="w-full bg-[#F3F4F6] text-text-main border border-gray-line font-black py-4 rounded-2xl text-xs hover:bg-gray-100 transition-all btn-active"
+                >
+                  🔥 我兩個都想試！挑戰雙軌任務
+                </button>
+                <button 
+                  onClick={() => {
+                    playSound('click');
+                    setShowQuizModal(false);
+                  }}
+                  className="text-text-sub/50 hover:text-text-sub font-bold text-[10px] tracking-widest uppercase transition-colors py-2 mt-2"
+                >
+                  取消關閉 Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Onboarding / Tutorial Carousel Modal */}
       <AnimatePresence>
         {showTutorialModal && (
-          <div className="absolute inset-0 z-[150] bg-black/65 backdrop-blur-sm pointer-events-auto flex items-center justify-center p-6">
+          <div className="absolute inset-0 z-[150] bg-gradient-to-br from-[#FAFFFD] to-[#E8F5D8] pointer-events-auto flex items-center justify-center p-6">
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-[40px] p-8 w-full max-w-[320px] text-center shadow-2xl border-4 border-white flex flex-col items-center relative"
+              className="bg-white rounded-[40px] p-8 w-full max-w-[325px] text-center shadow-float border-4 border-white flex flex-col items-center relative"
             >
               {/* Pagination Dots */}
               <div className="flex gap-2 mb-6">
@@ -2597,7 +2789,10 @@ export default function App() {
               <div className="w-full flex flex-col gap-2 mt-2">
                 {tutorialSlide < 3 ? (
                   <button 
-                    onClick={() => setTutorialSlide(prev => prev + 1)}
+                    onClick={() => {
+                      playSound('click');
+                      setTutorialSlide(prev => prev + 1);
+                    }}
                     className="w-full bg-text-main text-white font-black py-3 rounded-2xl text-xs btn-active flex items-center justify-center gap-1.5 shadow-md shadow-text-main/10"
                   >
                     了解，下一步 <ChevronRight className="w-3.5 h-3.5" />
@@ -2605,18 +2800,23 @@ export default function App() {
                 ) : (
                   <button 
                     onClick={async () => {
+                      playSound('success');
                       setShowTutorialModal(false);
                       await updateFirebaseState({ hasCompletedTutorial: true });
+                      setCurrentView('select'); // Force route to track selection screen!
                     }}
-                    className="w-full bg-text-main text-white font-black py-3 rounded-2xl text-xs btn-active flex items-center justify-center gap-1.5 shadow-md shadow-text-main/10"
+                    className="w-full bg-text-main text-white font-black py-3.5 rounded-2xl text-xs btn-active flex items-center justify-center gap-1.5 shadow-md shadow-text-main/10"
                   >
-                    開始永續挑戰！ 🎉
+                    完成，選擇挑戰路線！ ➔
                   </button>
                 )}
 
                 {tutorialSlide > 0 && (
                   <button 
-                    onClick={() => setTutorialSlide(prev => prev - 1)}
+                    onClick={() => {
+                      playSound('click');
+                      setTutorialSlide(prev => prev - 1);
+                    }}
                     className="w-full py-2.5 rounded-xl border border-gray-line text-xs text-text-sub font-black hover:bg-gray-50 transition-colors btn-active"
                   >
                     上一步
@@ -2626,8 +2826,10 @@ export default function App() {
                 {tutorialSlide < 3 && (
                   <button 
                     onClick={async () => {
+                      playSound('click');
                       setShowTutorialModal(false);
                       await updateFirebaseState({ hasCompletedTutorial: true });
+                      setCurrentView('select'); // Force route to track selection screen!
                     }}
                     className="text-text-sub/50 hover:text-text-sub font-bold text-[10px] tracking-widest uppercase transition-colors py-2 mt-1"
                   >
