@@ -258,30 +258,29 @@ export default function App() {
   useEffect(() => {
     if (!authLoading && user) {
       const stateToUse = localState || firebaseState;
-      if (!stateToUse) {
-        setCurrentView('select');
+      const hasCompleted = stateToUse ? stateToUse.hasCompletedTutorial : false;
+      
+      if (!hasCompleted) {
+        if (!showTutorialModal) {
+          setShowTutorialModal(true);
+          setTutorialSlide(0);
+          setCurrentView('preview'); // Set base view behind full-screen onboarding
+        }
       } else {
-        if (!stateToUse.hasSeenPreview) {
-          updateFirebaseState({ hasSeenPreview: true });
-          setCurrentView('select');
-        } else if (!stateToUse.track) {
-          setCurrentView('select');
-        } else if (currentView === 'preview' || currentView === 'select') {
-          setCurrentView('dashboard');
+        // If onboarding is completed but track is not selected yet
+        if (!stateToUse || !stateToUse.track) {
+          if (currentView !== 'select') {
+            setCurrentView('select');
+          }
+        } else {
+          // If track is selected, and we are still on preview/select pages, go to dashboard
+          if (currentView === 'preview' || currentView === 'select') {
+            setCurrentView('dashboard');
+          }
         }
       }
     }
-  }, [authLoading, user, firebaseState]);
-
-  // Trigger tutorial modal if not completed yet (pops up immediately after login, before track selection)
-  useEffect(() => {
-    const stateToUse = localState || firebaseState;
-    if (user && stateToUse && !stateToUse.hasCompletedTutorial && !showTutorialModal) {
-      setShowTutorialModal(true);
-      setTutorialSlide(0);
-      setCurrentView('preview'); // Set base view behind full-screen onboarding
-    }
-  }, [user, localState, firebaseState, showTutorialModal]);
+  }, [authLoading, user, localState, firebaseState, showTutorialModal, currentView]);
 
   // Trigger step-by-step dashboard guide for beginners
   useEffect(() => {
@@ -294,6 +293,27 @@ export default function App() {
       setDashboardGuideStep(null);
     }
   }, [currentView, state, dashboardGuideStep]);
+
+  // Smooth scroll to guide elements when step changes
+  useEffect(() => {
+    if (dashboardGuideStep === 1) {
+      setTimeout(() => {
+        const forestCard = document.querySelector('[data-guide="forest-card"]');
+        if (forestCard) {
+          forestCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 100);
+    } else if (dashboardGuideStep === 2) {
+      setTimeout(() => {
+        const taskCard = document.querySelector('[data-guide="task-card"]');
+        if (taskCard) {
+          taskCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
+  }, [dashboardGuideStep]);
 
   // Load feed from Firestore
   useEffect(() => {
@@ -722,10 +742,7 @@ export default function App() {
         {dashboardGuideStep !== null && (
           <div className="absolute inset-0 bg-black/60 z-20 pointer-events-auto rounded-b-[40px] rounded-t-none" />
         )}
-        <div className={cn(
-          `bg-gradient-to-b ${heroGrad} to-white-main px-6 pt-10 pb-8 rounded-b-[40px] shadow-sm relative transition-all duration-300`,
-          dashboardGuideStep === 1 ? "z-30" : "z-10"
-        )}>
+        <div className={`bg-gradient-to-b ${heroGrad} to-white-main px-6 pt-10 pb-8 rounded-b-[40px] shadow-sm relative`}>
           <div className="flex justify-between items-center mb-8">
             <div>
               <h2 className="text-2xl font-black text-text-main flex items-center gap-2 tracking-tight">
@@ -752,10 +769,13 @@ export default function App() {
           </div>
 
           {/* Global Forest Progress Bar Widget */}
-          <div className={cn(
-            "mb-6 bg-gradient-to-r from-emerald-800 to-emerald-950 rounded-[28px] p-5 text-white shadow-float relative overflow-hidden border border-emerald-700/30 transition-all duration-300",
-            dashboardGuideStep === 1 ? "z-30 ring-4 ring-green-400" : "z-10"
-          )}>
+          <div 
+            data-guide="forest-card"
+            className={cn(
+              "mb-6 bg-gradient-to-r from-emerald-800 to-emerald-950 rounded-[28px] p-5 text-white shadow-float relative overflow-hidden border border-emerald-700/30 transition-all duration-300",
+              dashboardGuideStep === 1 ? "z-30 ring-4 ring-green-400" : "z-10"
+            )}
+          >
             {/* Background elements */}
             <div className="absolute right-[-20px] bottom-[-20px] text-8xl opacity-15 select-none pointer-events-none">🌳</div>
             <div className="relative z-10 text-left">
@@ -884,10 +904,7 @@ export default function App() {
           )}
         </div>
 
-        <div className={cn(
-          "px-6 py-8 relative transition-all duration-300",
-          dashboardGuideStep === 2 ? "z-30" : "z-10"
-        )}>
+        <div className="px-6 py-8">
           {/* Current Task or Complete Celebration */}
           {state.unlockedBadges.includes(`${track}_complete`) ? (
             <motion.div 
@@ -969,6 +986,7 @@ export default function App() {
           ) : (
             <motion.div 
               whileHover={{ scale: 1.02 }}
+              data-guide="task-card"
               className={cn(
                 "bg-white rounded-[32px] p-6 shadow-soft relative overflow-hidden group border-l-[6px] transition-all duration-300",
                 dashboardGuideStep === 2 ? "z-30 ring-4 ring-green-main" : "z-10"
