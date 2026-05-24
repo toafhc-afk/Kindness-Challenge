@@ -162,6 +162,24 @@ export default function App() {
   const [quizRecommendation, setQuizRecommendation] = useState<Track | null>(null);
   const [dashboardGuideStep, setDashboardGuideStep] = useState<number | null>(null);
   const [checkinGuideStep, setCheckinGuideStep] = useState<number | null>(null);
+  const [profileGuideStep, setProfileGuideStep] = useState<number | null>(null);
+
+  // Helper for centering elements inside scrollable container
+  const smoothScrollToElement = (element: Element | null, block: 'center' | 'top' = 'center') => {
+    const container = scrollContainerRef.current;
+    if (!container || !element) return;
+    const containerRect = container.getBoundingClientRect();
+    const elementRect = element.getBoundingClientRect();
+    const relativeTop = elementRect.top - containerRect.top + container.scrollTop;
+    let targetScrollTop = relativeTop;
+    if (block === 'center') {
+      targetScrollTop = relativeTop - (containerRect.height / 2) + (elementRect.height / 2);
+    }
+    container.scrollTo({
+      top: Math.max(0, targetScrollTop),
+      behavior: 'smooth'
+    });
+  };
 
   // Map interactive state
   const [selectedMapTaskIndex, setSelectedMapTaskIndex] = useState<number | null>(null);
@@ -177,17 +195,19 @@ export default function App() {
     setSelectedMapTaskIndex(null);
   }, [currentView]);
 
-  // When entering map, scroll to bottom so level 1 is visible first
+  // When entering map, scroll to bottom so level 1 is visible first (if not guided)
   useEffect(() => {
     if (currentView === 'map' && scrollContainerRef.current) {
       const el = scrollContainerRef.current;
-      // Use requestAnimationFrame to ensure content is rendered
       const raf = requestAnimationFrame(() => {
-        el.scrollTop = el.scrollHeight;
+        const showFirstLevelGuide = state?.level === 1 && state?.checkInCount === 0;
+        if (!showFirstLevelGuide) {
+          el.scrollTop = el.scrollHeight;
+        }
       });
       return () => cancelAnimationFrame(raf);
     }
-  }, [currentView]);
+  }, [currentView, state]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (currentView === 'map') return; // always show nav on map
@@ -301,7 +321,7 @@ export default function App() {
       setTimeout(() => {
         const forestCard = document.querySelector('[data-guide="forest-card"]');
         if (forestCard) {
-          forestCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          smoothScrollToElement(forestCard, 'center');
         } else {
           scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -310,14 +330,14 @@ export default function App() {
       setTimeout(() => {
         const switcherCard = document.querySelector('[data-guide="switcher-card"]');
         if (switcherCard) {
-          switcherCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          smoothScrollToElement(switcherCard, 'center');
         }
       }, 100);
     } else if (dashboardGuideStep === 3) {
       setTimeout(() => {
         const taskCard = document.querySelector('[data-guide="task-card"]');
         if (taskCard) {
-          taskCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          smoothScrollToElement(taskCard, 'center');
         }
       }, 100);
     }
@@ -329,7 +349,7 @@ export default function App() {
       setTimeout(() => {
         const confirmBtn = document.querySelector('[data-guide="confirm-track-btn"]');
         if (confirmBtn) {
-          confirmBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          smoothScrollToElement(confirmBtn, 'center');
         }
       }, 150);
     }
@@ -353,7 +373,7 @@ export default function App() {
       setTimeout(() => {
         const checklistSection = document.querySelector('[data-guide="checkin-checklist"]');
         if (checklistSection) {
-          checklistSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          smoothScrollToElement(checklistSection, 'center');
         } else {
           scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -362,7 +382,7 @@ export default function App() {
       setTimeout(() => {
         const submitBtn = document.querySelector('[data-guide="checkin-submit-btn"]');
         if (submitBtn) {
-          submitBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          smoothScrollToElement(submitBtn, 'center');
         }
       }, 100);
     }
@@ -374,11 +394,39 @@ export default function App() {
       setTimeout(() => {
         const activeNode = document.querySelector('[data-guide="active-level-node"]');
         if (activeNode) {
-          activeNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          smoothScrollToElement(activeNode, 'center');
+        } else {
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+          }
         }
       }, 300);
     }
   }, [currentView]);
+
+  // Trigger step-by-step profile badge guide for first-time badge earners
+  useEffect(() => {
+    if (currentView === 'profile' && profileTab === 'badges' && state && state.checkInCount === 1) {
+      const hasSeenProfileGuide = localStorage.getItem('seen_profile_guide');
+      if (!hasSeenProfileGuide && profileGuideStep === null) {
+        setProfileGuideStep(1);
+      }
+    } else {
+      setProfileGuideStep(null);
+    }
+  }, [currentView, profileTab, state, profileGuideStep]);
+
+  // Smooth scroll to newly unlocked badge on profile tab
+  useEffect(() => {
+    if (profileGuideStep === 1) {
+      setTimeout(() => {
+        const newBadge = document.querySelector('[data-guide="new-unlocked-badge"]');
+        if (newBadge) {
+          smoothScrollToElement(newBadge, 'center');
+        }
+      }, 200);
+    }
+  }, [profileGuideStep]);
 
   // Load feed from Firestore
   useEffect(() => {
@@ -2158,7 +2206,10 @@ export default function App() {
     const tl = data.lightColor;
 
     return (
-      <div className="flex flex-col min-h-full bg-white-main">
+      <div className="flex flex-col min-h-full bg-white-main relative">
+        {profileGuideStep !== null && (
+          <div className="absolute inset-0 bg-black/45 z-25 pointer-events-auto rounded-b-[40px] rounded-t-none" />
+        )}
         {user?.isAnonymous && (
           <div className="bg-[#FF9F1C] text-white px-6 py-4 flex flex-col gap-2.5 items-center justify-between text-center shadow-md">
             <p className="text-[12px] font-black leading-relaxed flex items-center gap-1.5 justify-center">
@@ -2272,6 +2323,28 @@ export default function App() {
               </p>
             </div>
 
+            {/* Inline Step 1 Tooltip for Badges Onboarding */}
+            {profileGuideStep === 1 && (
+              <div className="mb-8 bg-white text-text-main p-5 rounded-3xl shadow-2xl z-30 border-2 border-green-main flex flex-col gap-3 relative animate-bounce-slow text-left">
+                <h4 className="font-black text-sm text-green-main flex items-center gap-1.5">
+                  <span>✨ 恭喜解鎖第一個徽章！</span>
+                </h4>
+                <p className="text-xs text-text-sub font-semibold leading-relaxed">
+                  看！這就是你剛剛完成挑戰獲得的亮起徽章。👉 <strong>點擊它（或用手指點按）可以放大查看詳細的任務內容喔！</strong>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    playSound('click');
+                    setProfileGuideStep(2);
+                  }}
+                  className="bg-green-main text-white font-black py-2.5 rounded-xl text-xs btn-active flex items-center justify-center gap-1"
+                >
+                  <span>我懂了，下一個說明 ➔</span>
+                </button>
+              </div>
+            )}
+
             {[
               { id: 'veg', name: '蔬食行動', color: 'from-[#E8F5D8] to-[#9FD356]', border: 'border-[#9FD356]' },
               { id: 'plastic', name: '淨塑行動', color: 'from-[#E1EEFA] to-[#3C91E6]', border: 'border-[#3C91E6]' },
@@ -2291,12 +2364,17 @@ export default function App() {
                 <div className="grid grid-cols-4 gap-y-6 gap-x-2 mb-6">
                   {BADGES.filter(b => b.track === trackInfo.id && b.type === 'levelBadge').map(badge => {
                     const isUnlocked = state.unlockedBadges.includes(badge.id);
+                    const isTargetGuideBadge = badge.id === `${state.track}_1`;
                     return (
                       <motion.div 
                         key={badge.id}
+                        data-guide={isTargetGuideBadge ? "new-unlocked-badge" : undefined}
                         onClick={() => setSelectedBadge(badge)}
                         whileHover={isUnlocked ? { y: -2 } : {}}
-                        className="flex flex-col items-center text-center group cursor-pointer"
+                        className={cn(
+                          "flex flex-col items-center text-center group cursor-pointer transition-all duration-300",
+                          (profileGuideStep === 1 && isTargetGuideBadge) ? "z-30 ring-4 ring-green-main p-2 bg-white rounded-3xl relative" : ""
+                        )}
                       >
                         <div className={cn(
                           "w-18 h-18 mb-2 flex items-center justify-center transition-all duration-500",
@@ -2468,7 +2546,7 @@ export default function App() {
       <nav id="bottom-nav" className={cn(
         "absolute bottom-0 left-0 w-full h-[calc(6rem+env(safe-area-inset-bottom,0px))] pb-[env(safe-area-inset-bottom,0px)] bg-white/95 backdrop-blur-xl border-t border-gray-line/50 flex justify-around items-center px-4 z-40 transition-all duration-500",
         ['preview', 'select'].includes(currentView) || (!isNavVisible && currentView !== 'map') ? "translate-y-full opacity-0" : "translate-y-0 opacity-100",
-        dashboardGuideStep !== null ? "pointer-events-none opacity-20 filter grayscale" : ""
+        (dashboardGuideStep !== null || profileGuideStep === 1) ? "pointer-events-none opacity-20 filter grayscale" : ""
       )}>
         <NavItem active={currentView === 'dashboard'} onClick={() => handleNav('dashboard')} icon={<Home />} label="首頁" />
         <NavItem active={currentView === 'map'} onClick={() => handleNav('map')} icon={<MapIcon />} label="地圖" />
@@ -2489,9 +2567,53 @@ export default function App() {
           <span className="absolute bottom-[-28px] left-1/2 -translate-x-1/2 text-[10px] font-black uppercase tracking-widest" style={{ color: '#4A9166' }}>打卡</span>
         </div>
 
-        <NavItem active={currentView === 'feed'} onClick={() => handleNav('feed')} icon={<Compass />} label="探索" />
+        <NavItem 
+          active={currentView === 'feed'} 
+          onClick={() => {
+            if (profileGuideStep === 2) {
+              playSound('success');
+              setProfileGuideStep(null);
+              localStorage.setItem('seen_profile_guide', 'true');
+            }
+            handleNav('feed');
+          }} 
+          icon={<Compass />} 
+          label="探索" 
+          dataGuide="nav-feed"
+          className={cn(
+            "transition-all duration-300",
+            profileGuideStep === 2 ? "z-50 ring-4 ring-green-main bg-white rounded-2xl p-2.5 -translate-y-2 relative" : ""
+          )}
+        />
         <NavItem active={currentView === 'profile'} onClick={() => handleNav('profile')} icon={<User />} label="我的" />
       </nav>
+
+      {/* Step 2 Backdrop Overlay and Tooltip for Profile Onboarding */}
+      {profileGuideStep === 2 && (
+        <>
+          <div className="absolute inset-0 bg-black/45 z-35 pointer-events-auto" />
+          <div className="absolute bottom-[calc(7rem+env(safe-area-inset-bottom,0px))] left-6 right-6 bg-white text-text-main p-5 rounded-3xl shadow-2xl z-50 border-2 border-[#9FD356] flex flex-col gap-3 relative animate-bounce-slow text-left">
+            <h4 className="font-black text-sm text-green-main flex items-center gap-1.5">
+              <span>🌍 第二步：去「探索動態」看大家的打卡！</span>
+            </h4>
+            <p className="text-xs text-text-sub font-semibold leading-relaxed">
+              恭喜您熟悉了徽章！現在點選下方的「<strong>探索</strong>」，去查看您剛剛發佈的打卡，還能看到其他挑戰者的環保心得、按讚互動喔！
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                playSound('success');
+                setProfileGuideStep(null);
+                localStorage.setItem('seen_profile_guide', 'true');
+                handleNav('feed');
+              }}
+              className="bg-text-main text-white font-black py-2.5 rounded-xl text-xs btn-active flex items-center justify-center gap-1"
+            >
+              <span>前往探索動態 🎉</span>
+            </button>
+          </div>
+        </>
+      )}
 
       {currentView === 'admin' && (
         <div className="absolute inset-0 z-50 bg-white">
@@ -3157,13 +3279,15 @@ export default function App() {
 
 // --- Helper Components ---
 
-function NavItem({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
+function NavItem({ active, onClick, icon, label, dataGuide, className }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string; dataGuide?: string; className?: string }) {
   return (
     <div 
       onClick={onClick}
+      data-guide={dataGuide}
       className={cn(
         "flex flex-col items-center gap-1.5 cursor-pointer transition-all duration-300",
-        active ? "text-nav-accent" : "text-gray-lock hover:text-text-sub"
+        active ? "text-nav-accent" : "text-gray-lock hover:text-text-sub",
+        className
       )}
     >
       <motion.div 
