@@ -287,13 +287,13 @@ export default function App() {
   useEffect(() => {
     if (currentView === 'dashboard' && state && state.level === 1 && state.checkInCount === 0) {
       const hasSeenDashboardGuide = localStorage.getItem(`seen_db_guide_${state.track}`);
-      if (!hasSeenDashboardGuide) {
+      if (!hasSeenDashboardGuide && dashboardGuideStep === null) {
         setDashboardGuideStep(1);
       }
     } else {
       setDashboardGuideStep(null);
     }
-  }, [currentView, state]);
+  }, [currentView, state, dashboardGuideStep]);
 
   // Load feed from Firestore
   useEffect(() => {
@@ -682,7 +682,7 @@ export default function App() {
     </div>
   );
 
-  const DashboardView = () => {
+  const renderDashboardView = () => {
     const lv = currentLevel;
     const expReq = LEVELS_EXP_REQ[Math.min(lv, 4)];
     const prevReq = LEVELS_EXP_REQ[lv - 1];
@@ -1026,7 +1026,7 @@ export default function App() {
     );
   };
 
-  const MapView = () => {
+  const renderMapView = () => {
     const track = state.track || 'veg';
     const data = TRACK_DATA[track];
     const tasks = data.tasks;
@@ -2277,8 +2277,8 @@ export default function App() {
         >
           {currentView === 'preview' && renderPreviewView()}
           {currentView === 'select' && renderSelectView()}
-          {currentView === 'dashboard' && <DashboardView />}
-          {currentView === 'map' && <MapView />}
+          {currentView === 'dashboard' && renderDashboardView()}
+          {currentView === 'map' && renderMapView()}
           {currentView === 'checkin' && renderCheckinView()}
           {currentView === 'feed' && renderFeedView()}
           {currentView === 'profile' && renderProfileView()}
