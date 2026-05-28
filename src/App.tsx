@@ -38,7 +38,7 @@ import {
 import { useAuth } from './lib/AuthContext';
 import { loginWithGoogle, loginAnonymously, googleProvider, auth, db, storage } from './lib/firebase';
 import { signOut, linkWithPopup } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit, onSnapshot, deleteDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit, onSnapshot, deleteDoc, arrayUnion, where } from 'firebase/firestore';
 import { TRACK_DATA, LEVELS_EXP_REQ, TITLES, TITLES_BY_TRACK, BADGES, DAILY_RANDOM_TASKS } from './constants';
 import { View, Track, Task, AppState, Badge } from './types';
 import { cn, calculateLevel, getLevelForTrack } from './lib/utils';
