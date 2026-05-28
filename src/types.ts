@@ -46,6 +46,8 @@ export interface AppState {
   uid?: string;
   createdAt?: any;
   updatedAt?: any;
+  customDisplayName?: string;
+  customAvatarSeed?: string;
 }
 
 export type View = 'preview' | 'select' | 'dashboard' | 'map' | 'checkin' | 'feed' | 'profile' | 'admin';

@@ -164,6 +164,11 @@ export default function App() {
   const [checkinGuideStep, setCheckinGuideStep] = useState<number | null>(null);
   const [profileGuideStep, setProfileGuideStep] = useState<number | null>(null);
 
+  // Profile Setup states
+  const [profileSetupName, setProfileSetupName] = useState('');
+  const [profileSetupAvatar, setProfileSetupAvatar] = useState('Felix');
+  const [profileCustomAvatarText, setProfileCustomAvatarText] = useState('');
+
   // Helper for centering elements inside scrollable container with retry fallback for lazy render
   const smoothScrollToElement = (elementOrSelector: Element | string | null, block: 'center' | 'top' = 'center', retryCount = 0) => {
     let element: Element | null = null;
@@ -356,6 +361,28 @@ export default function App() {
     }
   }, [authLoading, user, localState, firebaseState, showTutorialModal, currentView]);
 
+  // Synchronize profile setup states with DB state when loaded
+  useEffect(() => {
+    if (state.customDisplayName) {
+      setProfileSetupName(state.customDisplayName);
+    } else if (user) {
+      setProfileSetupName(user.displayName || (user.isAnonymous ? '訪客探險家' : '綠色小勇士'));
+    }
+    
+    if (state.customAvatarSeed) {
+      setProfileSetupAvatar(state.customAvatarSeed);
+      const presets = ['Bella', 'Felix', 'Charlie', 'Daisy', 'Oliver', 'Ruby', 'Sam', 'Leo'];
+      if (!presets.includes(state.customAvatarSeed)) {
+        setProfileCustomAvatarText(state.customAvatarSeed);
+      } else {
+        setProfileCustomAvatarText('');
+      }
+    } else {
+      setProfileSetupAvatar('Felix');
+      setProfileCustomAvatarText('');
+    }
+  }, [state.customDisplayName, state.customAvatarSeed, user]);
+
   // Trigger step-by-step dashboard guide for beginners
   useEffect(() => {
     if (currentView === 'dashboard' && state && state.level === 1 && state.checkInCount === 0) {
@@ -506,7 +533,7 @@ export default function App() {
     if (showRewardModal) {
       setCertificateImageUrl(null);
       const dateStr = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
-      const nameStr = user?.displayName || (user?.isAnonymous ? '訪客探險家' : '匿名探險家');
+      const nameStr = state.customDisplayName || user?.displayName || (user?.isAnonymous ? '訪客探險家' : '匿名探險家');
       generateCertificate(showRewardModal, nameStr, dateStr)
         .then(url => {
           setCertificateImageUrl(url);
@@ -1670,8 +1697,8 @@ export default function App() {
         await Promise.all([
           addDoc(collection(db, 'checkins'), {
             userId: user?.uid,
-            userName: user?.displayName || '匿名探險家',
-            userAvatar: track,
+            userName: state.customDisplayName || user?.displayName || '匿名探險家',
+            userAvatar: state.customAvatarSeed || track || 'anon',
             track,
             level: state.level, // The level they just completed
             text: checkinText,
@@ -2204,8 +2231,8 @@ export default function App() {
                       const postRef = doc(db, 'checkins', post.id);
                       await updateDoc(postRef, {
                         comments: arrayUnion({
-                          userName: user?.displayName || '匿名探險家',
-                          userAvatar: state.track || 'anon',
+                          userName: state.customDisplayName || user?.displayName || '匿名探險家',
+                          userAvatar: state.customAvatarSeed || state.track || 'anon',
                           text: commentInputText.trim(),
                           timestamp: Date.now(),
                           userId: user?.uid
@@ -2362,14 +2389,14 @@ export default function App() {
           <div className="flex items-center gap-6 mb-10">
             <div className="w-24 h-24 rounded-full border-[6px] border-white shadow-float overflow-hidden shrink-0" style={{ backgroundColor: tl }}>
               <img 
-                src={`https://api.dicebear.com/7.x/notionists/svg?seed=${state.track || 'felix'}&backgroundColor=transparent`} 
+                src={`https://api.dicebear.com/7.x/notionists/svg?seed=${state.customAvatarSeed || state.track || 'felix'}&backgroundColor=transparent`} 
                 alt="Avatar" 
                 className="w-full h-full object-cover"
               />
             </div>
             <div>
-              <h2 className="text-24pt font-black text-text-main tracking-tight leading-tight">
-                {user?.isAnonymous ? '訪客探險家' : (user?.displayName || '匿名探險家')}
+              <h2 className="text-24pt font-black text-text-main tracking-tight leading-tight text-left">
+                {state.customDisplayName || (user?.isAnonymous ? '訪客探險家' : (user?.displayName || '匿名探險家'))}
               </h2>
               <div className="flex items-center gap-3 mt-3">
                 <span className="text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest" style={{ backgroundColor: tc }}>
@@ -2551,6 +2578,97 @@ export default function App() {
             <div className="flex flex-col gap-1.5 mb-2">
               <h3 className="font-black text-lg text-text-main tracking-tight">系統設定與操作</h3>
               <p className="text-[11px] text-text-sub font-semibold">在這裡管理您的挑戰進度和帳號設定。</p>
+            </div>
+
+            {/* Edit Profile Section */}
+            <div className="bg-white rounded-3xl p-5 border border-gray-line/60 shadow-soft flex flex-col gap-4">
+              <h4 className="font-black text-sm text-text-main flex items-center gap-1.5">
+                👤 編輯個人檔案
+              </h4>
+              
+              <div className="flex gap-4 items-center">
+                <div className="w-16 h-16 rounded-full border-2 border-green-light/45 bg-gray-line/30 shadow-inner overflow-hidden shrink-0 flex items-center justify-center">
+                  <img 
+                    src={`https://api.dicebear.com/7.x/notionists/svg?seed=${profileSetupAvatar || 'anon'}&backgroundColor=transparent`} 
+                    className="w-full h-full object-cover"
+                    alt="Settings Avatar Preview"
+                  />
+                </div>
+                <div className="flex-1">
+                  <span className="text-[10px] font-black text-text-sub uppercase tracking-wider block mb-1">玩家暱稱</span>
+                  <input 
+                    type="text" 
+                    value={profileSetupName}
+                    onChange={(e) => setProfileSetupName(e.target.value)}
+                    maxLength={15}
+                    placeholder="輸入暱稱..."
+                    className="w-full bg-gray-line/40 border border-transparent rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-green-main focus:bg-white transition-all shadow-inner-soft font-bold text-text-main"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-black text-text-sub uppercase tracking-wider block mb-2">選擇頭像</span>
+                <div className="grid grid-cols-8 gap-1 mb-2">
+                  {['Bella', 'Felix', 'Charlie', 'Daisy', 'Oliver', 'Ruby', 'Sam', 'Leo'].map(seed => {
+                    const isSelected = profileSetupAvatar === seed && !profileCustomAvatarText;
+                    return (
+                      <div 
+                        key={seed}
+                        onClick={() => {
+                          playSound('click');
+                          setProfileSetupAvatar(seed);
+                          setProfileCustomAvatarText('');
+                        }}
+                        className={cn(
+                          "w-8 h-8 rounded-lg border flex items-center justify-center cursor-pointer transition-all bg-gray-50",
+                          isSelected ? "border-green-main ring-1 ring-green-main/30 scale-105" : "border-transparent opacity-75 hover:opacity-100"
+                        )}
+                      >
+                        <img 
+                          src={`https://api.dicebear.com/7.x/notionists/svg?seed=${seed}&backgroundColor=transparent`} 
+                          className="w-7 h-7 object-cover"
+                          alt={seed}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                <input 
+                  type="text" 
+                  value={profileCustomAvatarText}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setProfileCustomAvatarText(val);
+                    setProfileSetupAvatar(val.trim() || 'Felix');
+                  }}
+                  placeholder="或輸入任意文字自訂頭像..."
+                  className="w-full bg-gray-line/40 border border-transparent rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-green-main focus:bg-white transition-all shadow-inner-soft text-text-main font-medium"
+                />
+              </div>
+
+              <button 
+                onClick={async () => {
+                  if (!profileSetupName.trim()) {
+                    alert('請輸入玩家暱稱！');
+                    return;
+                  }
+                  try {
+                    await updateFirebaseState({
+                      customDisplayName: profileSetupName.trim(),
+                      customAvatarSeed: profileSetupAvatar
+                    });
+                    playSound('success');
+                    alert('🎉 個人檔案修改成功！');
+                  } catch (err) {
+                    console.error('Failed to update profile:', err);
+                  }
+                }}
+                className="w-full bg-green-main text-white font-black py-2.5 rounded-xl text-xs btn-active shadow-sm hover:scale-[0.98] transition-transform"
+              >
+                儲存個人檔案修改
+              </button>
             </div>
 
             <button 
@@ -3437,6 +3555,123 @@ export default function App() {
                   </button>
                 )}
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Onboarding Profile Setup Modal */}
+      <AnimatePresence>
+        {(!authLoading && !!user && state.hasCompletedTutorial && !state.customDisplayName) && (
+          <div className="absolute inset-0 z-[160] bg-gradient-to-br from-[#FAFFFD] to-[#E8F5D8] pointer-events-auto flex items-center justify-center p-6 overflow-y-auto">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-[40px] p-8 w-full max-w-[340px] text-center shadow-float border-4 border-white flex flex-col items-center relative my-8"
+            >
+              <div className="w-16 h-16 bg-green-light rounded-2xl flex items-center justify-center text-4xl mb-4 shadow-sm">🌱</div>
+              <h2 className="text-2xl font-black text-text-main mb-2 tracking-tight">建立探險家檔案</h2>
+              <p className="text-[11px] text-text-sub font-semibold mb-6 leading-relaxed">
+                保護隱私！請選擇在此挑戰動態牆上公開顯示的名稱與頭像，您的真實姓名將不會被公開。
+              </p>
+
+              <form 
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!profileSetupName.trim()) {
+                    alert('請輸入玩家暱稱！');
+                    return;
+                  }
+                  await updateFirebaseState({
+                    customDisplayName: profileSetupName.trim(),
+                    customAvatarSeed: profileSetupAvatar
+                  });
+                }}
+                className="w-full flex flex-col gap-5 text-left"
+              >
+                <div>
+                  <label className="block text-xs font-black text-text-sub uppercase tracking-wider mb-2">
+                    ✍️ 玩家暱稱
+                  </label>
+                  <input 
+                    type="text" 
+                    value={profileSetupName}
+                    onChange={(e) => setProfileSetupName(e.target.value)}
+                    maxLength={15}
+                    placeholder="輸入暱稱..."
+                    className="w-full bg-gray-line/50 border-2 border-transparent rounded-2xl px-4 py-3.5 text-base focus:outline-none focus:border-green-main focus:bg-white transition-all shadow-inner-soft font-bold text-text-main"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-text-sub uppercase tracking-wider mb-2">
+                    🎭 選擇頭像
+                  </label>
+                  
+                  {/* Selected Avatar Preview */}
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="w-20 h-20 rounded-full border-4 border-green-light/40 bg-gray-line/30 shadow-inner overflow-hidden flex items-center justify-center">
+                      <img 
+                        src={`https://api.dicebear.com/7.x/notionists/svg?seed=${profileSetupAvatar || 'anon'}&backgroundColor=transparent`} 
+                        className="w-full h-full object-cover"
+                        alt="Avatar Preview"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Preset Options Grid */}
+                  <div className="grid grid-cols-4 gap-2 mb-3">
+                    {['Bella', 'Felix', 'Charlie', 'Daisy', 'Oliver', 'Ruby', 'Sam', 'Leo'].map(seed => {
+                      const isSelected = profileSetupAvatar === seed && !profileCustomAvatarText;
+                      return (
+                        <div 
+                          key={seed}
+                          onClick={() => {
+                            playSound('click');
+                            setProfileSetupAvatar(seed);
+                            setProfileCustomAvatarText('');
+                          }}
+                          className={cn(
+                            "w-12 h-12 rounded-xl border-2 flex items-center justify-center cursor-pointer transition-all bg-gray-50",
+                            isSelected ? "border-green-main ring-2 ring-green-main/30 scale-105" : "border-transparent opacity-75 hover:opacity-100"
+                          )}
+                        >
+                          <img 
+                            src={`https://api.dicebear.com/7.x/notionists/svg?seed=${seed}&backgroundColor=transparent`} 
+                            className="w-10 h-10 object-cover"
+                            alt={seed}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Custom Seed Input */}
+                  <div className="mt-3">
+                    <span className="text-[10px] font-black text-text-sub/70 block mb-1">💡 或是輸入任意字詞生成獨特頭像：</span>
+                    <input 
+                      type="text" 
+                      value={profileCustomAvatarText}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setProfileCustomAvatarText(val);
+                        setProfileSetupAvatar(val.trim() || 'Felix');
+                      }}
+                      placeholder="例如你的英文名字..."
+                      className="w-full bg-gray-line/40 border border-transparent rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-green-main focus:bg-white transition-all shadow-inner-soft text-text-main font-medium"
+                    />
+                  </div>
+                </div>
+
+                <button 
+                  type="submit"
+                  className="w-full bg-text-main text-white font-black py-4 rounded-2xl text-sm btn-active flex items-center justify-center gap-1.5 shadow-md shadow-text-main/10 mt-2"
+                >
+                  開始你的挑戰之旅！ ➔
+                </button>
+              </form>
             </motion.div>
           </div>
         )}
