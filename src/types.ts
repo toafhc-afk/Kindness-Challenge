@@ -50,4 +50,4 @@ export interface AppState {
   customAvatarSeed?: string;
 }
 
-export type View = 'preview' | 'select' | 'dashboard' | 'map' | 'checkin' | 'feed' | 'profile' | 'admin';
+export type View = 'preview' | 'select' | 'dashboard' | 'map' | 'checkin' | 'feed' | 'profile' | 'admin' | 'notifications';

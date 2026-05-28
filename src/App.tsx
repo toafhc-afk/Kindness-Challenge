@@ -22,6 +22,7 @@ import {
   ChevronRight,
   ChevronLeft,
   Heart,
+  Bell,
   MessageCircle,
   Star,
   Search,
@@ -168,6 +169,11 @@ export default function App() {
   const [profileSetupName, setProfileSetupName] = useState('');
   const [profileSetupAvatar, setProfileSetupAvatar] = useState('Felix');
   const [profileCustomAvatarText, setProfileCustomAvatarText] = useState('');
+
+  // Notifications states
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const unreadCount = notifications.filter(n => !n.read).length;
+  const lastUnreadCount = React.useRef(0);
 
   // Helper for centering elements inside scrollable container with retry fallback for lazy render
   const smoothScrollToElement = (elementOrSelector: Element | string | null, block: 'center' | 'top' = 'center', retryCount = 0) => {
@@ -382,6 +388,40 @@ export default function App() {
       setProfileCustomAvatarText('');
     }
   }, [state.customDisplayName, state.customAvatarSeed, user]);
+
+  // Real-time listener for user notifications
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      return;
+    }
+    const q = query(
+      collection(db, 'notifications'),
+      where('recipientId', '==', user.uid)
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Sort in-memory to avoid compound index requirements
+      list.sort((a: any, b: any) => {
+        const timeA = a.timestamp?.seconds || 0;
+        const timeB = b.timestamp?.seconds || 0;
+        return timeB - timeA;
+      });
+      setNotifications(list);
+    }, (err) => {
+      console.error("Notifications listener failed:", err);
+    });
+    return unsubscribe;
+  }, [user]);
+
+  // Play notification sound when a new unread notification arrives
+  useEffect(() => {
+    const unread = notifications.filter(n => !n.read);
+    if (unread.length > lastUnreadCount.current && lastUnreadCount.current > 0) {
+      playSound('levelup');
+    }
+    lastUnreadCount.current = unread.length;
+  }, [notifications]);
 
   // Trigger step-by-step dashboard guide for beginners
   useEffect(() => {
@@ -995,10 +1035,10 @@ export default function App() {
         <div className={`bg-gradient-to-b ${heroGrad} to-white-main px-6 pt-10 pb-8 rounded-b-[40px] shadow-sm relative`}>
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h2 className="text-2xl font-black text-text-main flex items-center gap-2 tracking-tight">
+              <h2 className="text-2xl font-black text-text-main flex items-center gap-2 tracking-tight text-left">
                 你好，探險家 <motion.span animate={{ rotate: [0, 20, 0] }} transition={{ repeat: Infinity, duration: 2 }}>👋</motion.span>
               </h2>
-              <p className="text-sm text-text-sub font-medium opacity-80">一起讓世界變得更好！</p>
+              <p className="text-sm text-text-sub font-medium opacity-80 text-left">一起讓世界變得更好！</p>
               <button 
                 onClick={() => {
                   setTutorialSlide(0);
@@ -1009,13 +1049,29 @@ export default function App() {
                 <span>💡 玩法教學</span>
               </button>
             </div>
-            <motion.div 
-              whileHover={{ scale: 1.05 }}
-              className="w-14 h-14 rounded-full bg-white shadow-lg p-1 overflow-hidden border-2"
-              style={{ borderColor: tc }}
-            >
-              <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${state.track || 'anon'}&backgroundColor=transparent`} alt="Avatar" />
-            </motion.div>
+            <div className="flex items-center gap-2.5">
+              {/* Bell Notification Button */}
+              <button
+                onClick={() => handleNav('notifications')}
+                className="relative p-2.5 text-text-sub hover:text-text-main transition-all bg-white hover:bg-gray-50 rounded-full border border-gray-line/50 shadow-sm flex items-center justify-center shrink-0 btn-active animate-fade-in"
+              >
+                <Bell className="w-5.5 h-5.5 text-text-main" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border border-white shadow-md animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              <motion.div 
+                onClick={() => handleNav('profile')}
+                whileHover={{ scale: 1.05 }}
+                className="w-14 h-14 rounded-full bg-white shadow-lg p-1 overflow-hidden border-2 cursor-pointer shrink-0"
+                style={{ borderColor: tc }}
+              >
+                <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${state.customAvatarSeed || state.track || 'anon'}&backgroundColor=transparent`} alt="Avatar" />
+              </motion.div>
+            </div>
           </div>
 
           {/* Global Forest Progress Bar Widget */}
@@ -2023,6 +2079,17 @@ export default function App() {
     <div className="flex flex-col min-h-full bg-gray-line/20">
       <div className="sticky top-0 z-20 px-6 py-6 bg-white/90 backdrop-blur-xl border-b border-gray-line/50 flex justify-between items-center">
         <h2 className="text-xl font-black text-text-main tracking-tight">探索動態</h2>
+        <button
+          onClick={() => handleNav('notifications')}
+          className="relative p-2.5 text-text-sub hover:text-text-main transition-colors bg-gray-line/35 rounded-full btn-active flex items-center justify-center animate-fade-in"
+        >
+          <Bell className="w-5.5 h-5.5 text-text-main" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border border-white shadow-md animate-pulse">
+              {unreadCount}
+            </span>
+          )}
+        </button>
       </div>
       
       <div className="px-6 py-8 space-y-6">
@@ -2035,6 +2102,7 @@ export default function App() {
         {globalFeed.map((post, idx) => (
           <motion.div 
             key={post.id}
+            id={`post-${post.id}`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.1 }}
@@ -2238,6 +2306,23 @@ export default function App() {
                           userId: user?.uid
                         })
                       });
+                      
+                      // Create notification document if commenter is not the post author
+                      if (post.userId && post.userId !== user?.uid) {
+                        await addDoc(collection(db, 'notifications'), {
+                          recipientId: post.userId,
+                          senderId: user?.uid,
+                          senderName: state.customDisplayName || user?.displayName || '匿名探險家',
+                          senderAvatar: state.customAvatarSeed || state.track || 'anon',
+                          type: 'comment',
+                          postId: post.id,
+                          postText: post.text?.slice(0, 30) || '',
+                          commentText: commentInputText.trim().slice(0, 100),
+                          timestamp: serverTimestamp(),
+                          read: false
+                        });
+                      }
+
                       setCommentInputText('');
                     } catch (err) {
                       console.error('Failed to add comment:', err);
@@ -2277,6 +2362,106 @@ export default function App() {
       </div>
     </div>
   );
+
+  const renderNotificationsView = () => {
+    return (
+      <div className="flex flex-col min-h-full bg-white relative">
+        <div className="sticky top-0 z-20 px-6 pt-12 pb-6 bg-white/95 backdrop-blur-md border-b border-gray-line/50">
+          <div className="flex items-center gap-3 mb-1">
+            <button 
+              onClick={() => handleNav('dashboard')} 
+              className="p-2 -ml-2 text-text-sub hover:text-text-main transition-colors"
+            >
+              <ChevronLeft />
+            </button>
+            <h1 className="text-2xl font-black text-text-main">通知中心</h1>
+          </div>
+          <div className="flex justify-between items-center ml-10">
+            <p className="text-[11px] text-text-sub font-black uppercase tracking-widest">這裡記錄了夥伴與你的溫暖互動</p>
+            {unreadCount > 0 && (
+              <button 
+                onClick={async () => {
+                  playSound('click');
+                  const batchPromises = notifications
+                    .filter(n => !n.read)
+                    .map(n => updateDoc(doc(db, 'notifications', n.id), { read: true }));
+                  await Promise.all(batchPromises);
+                }}
+                className="text-[10px] font-black text-green-main hover:underline"
+              >
+                全部標記為已讀 ✓
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 pb-32">
+          {notifications.length === 0 ? (
+            <div className="text-center py-20 opacity-50">
+              <Bell className="w-12 h-12 mx-auto mb-4 animate-pulse text-gray-lock" />
+              <p className="font-black text-sm">目前還沒有收到任何通知喔！</p>
+            </div>
+          ) : (
+            notifications.map((notif) => (
+              <div 
+                key={notif.id}
+                onClick={async () => {
+                  playSound('click');
+                  if (!notif.read) {
+                    await updateDoc(doc(db, 'notifications', notif.id), { read: true });
+                  }
+                  
+                  setCurrentView('feed');
+                  setActiveCommentPostId(notif.postId);
+                  setTimeout(() => {
+                    const postElement = document.getElementById(`post-${notif.postId}`);
+                    if (postElement) {
+                      smoothScrollToElement(postElement, 'center');
+                    }
+                  }, 500);
+                }}
+                className={cn(
+                  "p-4 rounded-3xl border transition-all cursor-pointer flex gap-3.5 items-start text-left",
+                  notif.read 
+                    ? "bg-white border-gray-line/45 opacity-75" 
+                    : "bg-green-light/10 border-green-main/20 shadow-sm"
+                )}
+              >
+                <img 
+                  src={`https://api.dicebear.com/7.x/notionists/svg?seed=${notif.senderAvatar || 'anon'}&backgroundColor=transparent`} 
+                  className="w-11 h-11 rounded-full bg-gray-line shadow-inner shrink-0"
+                  alt="Sender Avatar"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-black text-xs text-text-main">{notif.senderName}</span>
+                    <span className="text-[9px] text-text-sub/50 font-bold">
+                      {notif.timestamp?.seconds 
+                        ? new Date(notif.timestamp.seconds * 1000).toLocaleDateString('zh-TW', {month: '2-digit', day: '2-digit'}) + ' ' + new Date(notif.timestamp.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                        : '剛剛'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-sub font-semibold leading-relaxed">
+                    {notif.type === 'comment' ? (
+                      <>
+                        在你的貼文「<span className="italic font-bold text-text-main truncate max-w-[80px] inline-block align-bottom">{notif.postText}</span>」留下回覆：<br/>
+                        <span className="text-text-main font-bold">「{notif.commentText}」</span>
+                      </>
+                    ) : (
+                      `讚了你的貼文「${notif.postText}」`
+                    )}
+                  </p>
+                </div>
+                {!notif.read && (
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0 self-center" />
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const AdminView = () => {
     const [allPosts, setAllPosts] = useState<any[]>([]);
@@ -2812,6 +2997,7 @@ export default function App() {
           {currentView === 'feed' && renderFeedView()}
           {currentView === 'profile' && renderProfileView()}
           {currentView === 'admin' && <AdminView />}
+          {currentView === 'notifications' && renderNotificationsView()}
         </motion.div>
       </AnimatePresence>
 
