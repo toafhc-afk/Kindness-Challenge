@@ -4,6 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>永續大挑戰</title>
+    <script>
+      (function() {
+        var ua = navigator.userAgent || navigator.vendor || window.opera;
+        var isLine = /Line/i.test(ua);
+        if (isLine && !window.location.search.includes('openExternalBrowser=1')) {
+          var url = window.location.href;
+          var separator = url.indexOf('?') !== -1 ? '&' : '?';
+          window.location.href = url + separator + 'openExternalBrowser=1';
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -219,6 +219,24 @@ export default function App() {
   // Map interactive state
   const [selectedMapTaskIndex, setSelectedMapTaskIndex] = useState<number | null>(null);
 
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false);
+  const [isIOSDevice, setIsIOSDevice] = useState(false);
+
+  useEffect(() => {
+    const ua = navigator.userAgent || navigator.vendor || (window as any).opera;
+    const isFB = /FBAN|FBAV/i.test(ua);
+    const isIG = /Instagram/i.test(ua);
+    const isWeChat = /MicroMessenger/i.test(ua);
+    const isLine = /Line/i.test(ua);
+
+    if (isFB || isIG || isWeChat || isLine) {
+      setIsInAppBrowser(true);
+    }
+
+    const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    setIsIOSDevice(ios);
+  }, []);
+
   useEffect(() => {
     setIsNavVisible(true);
     lastScrollY.current = 0;
@@ -579,6 +597,62 @@ export default function App() {
   if (!user) {
     return (
       <div id="app-container" className="max-w-[400px] mx-auto bg-white-main h-svh relative overflow-hidden flex flex-col shadow-2xl items-center justify-center p-12 text-center">
+        {isInAppBrowser && (
+          <div className="absolute inset-0 bg-text-main/95 z-50 flex flex-col items-center justify-between p-8 text-white animate-fade-in">
+            {/* Top pointing guide for Android / general */}
+            {!isIOSDevice ? (
+              <div className="self-end flex flex-col items-end gap-2 animate-bounce-slow mt-2">
+                <span className="text-sm font-bold bg-green-main text-text-main px-3 py-1 rounded-full shadow-sm">
+                  點擊右上角選單 ↗
+                </span>
+                <svg className="w-8 h-8 text-green-main stroke-[3px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+              </div>
+            ) : (
+              <div className="h-10" />
+            )}
+
+            <div className="flex-1 flex flex-col items-center justify-center my-auto">
+              <div className="w-20 h-20 bg-green-main/20 rounded-full flex items-center justify-center text-4xl mb-6 pulse-glow">
+                🌐
+              </div>
+              <h2 className="text-2xl font-black mb-4 tracking-tight text-green-main">請使用系統瀏覽器開啟</h2>
+              <p className="text-xs text-gray-lock leading-relaxed font-semibold mb-6 max-w-[280px]">
+                由於 Google 的安全性政策限制，無法在 LINE、Facebook 等 App 的內建瀏覽器中進行登入。
+              </p>
+              
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4.5 text-left w-full text-xs space-y-3 font-medium">
+                <p className="font-bold text-green-main text-sm">💡 開啟步驟：</p>
+                {isIOSDevice ? (
+                  <p className="leading-relaxed text-gray-300">
+                    1. 點擊右下角的 <span className="bg-white/10 px-1.5 py-0.5 rounded font-bold text-white">Safari 瀏覽器圖示</span> 或分享按鈕。<br/>
+                    2. 選擇 <span className="text-green-main font-bold">「用 Safari 開啟」</span> 即可順利登入！
+                  </p>
+                ) : (
+                  <p className="leading-relaxed text-gray-300">
+                    1. 點擊右上角的 <span className="bg-white/10 px-1.5 py-0.5 rounded font-bold text-white">三個點 ···</span> 選單。<br/>
+                    2. 選擇 <span className="text-green-main font-bold">「在 Chrome 中開啟」</span>（或使用預設瀏覽器開啟）即可順利登入！
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom pointing guide for iOS */}
+            {isIOSDevice ? (
+              <div className="self-end flex flex-col items-end gap-2 animate-bounce-slow mb-2">
+                <svg className="w-8 h-8 text-green-main stroke-[3px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+                <span className="text-sm font-bold bg-green-main text-text-main px-3 py-1 rounded-full shadow-sm">
+                  點擊右下角瀏覽器圖示 ↘
+                </span>
+              </div>
+            ) : (
+              <div className="h-10" />
+            )}
+          </div>
+        )}
         <div className="w-32 h-32 bg-green-light rounded-full flex items-center justify-center text-6xl mb-8 pulse-glow">🌱</div>
         <h1 className="text-3xl font-black text-text-main mb-4 tracking-tighter">開始你的<br/>永續大挑戰</h1>
         <p className="text-sm text-text-sub mb-10 leading-relaxed font-medium">
